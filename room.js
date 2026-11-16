@@ -12,14 +12,14 @@
   const LS_ROOM = "aihub.room.v2";      // 단톡방 대화 기록
   const MAX_MSGS = 300;
   const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta";
-  const DEFAULT_MODEL = "gemini-3.5-flash-lite";
+  const DEFAULT_MODEL = "gemini-4-hydrogen";
   const MODEL_PRESETS = [
-    { id: "gemini-3.5-flash-lite", label: "gemini-3.5-flash-lite · 가장 빠름(1초)" },
-    { id: "gemini-3.1-flash-lite", label: "gemini-3.1-flash-lite · 빠름" },
-    { id: "gemini-3.8-flash", label: "gemini-3.8-flash · 균형" },
-    { id: "gemini-4-hydrogen", label: "gemini-4-hydrogen · 고성능" },
-    { id: "gemini-4-argon", label: "gemini-4-argon · 고성능(권한 필요)" },
-    { id: "gemini-flash-latest", label: "gemini-flash-latest · 최신 별칭" },
+    { id: "gemini-4-argon", label: "아르곤 · 최상위 (유료 등급 필요)" },
+    { id: "gemini-4-hydrogen", label: "하이드로젠 · 고성능 (기본)" },
+    { id: "gemini-3.8-flash", label: "3.8 flash" },
+    { id: "gemini-3.5-flash", label: "3.5 flash" },
+    { id: "gemini-3.1-flash-lite", label: "3.1 flash-lite · 빠름" },
+    { id: "gemini-3.5-flash-lite", label: "3.5 flash-lite · 가장 빠름" },
   ];
 
   /* ---------------- AI 정의 ---------------- */
@@ -256,6 +256,9 @@
       return new GemErr("model", `'${model}' 모델을 찾을 수 없습니다. 설정 → '모델 목록 불러오기'로 쓸 수 있는 모델을 골라 주세요.`);
     }
     if (status === 429) {
+      if (/limit:\s*0\b/.test(msg)) {
+        return new GemErr("quota", `이 키의 요금제에서는 '${model}'을 쓸 수 없습니다(무료 등급 한도 0). '하이드로젠'으로 바꾸거나 유료 등급으로 올려 주세요.`);
+      }
       return new GemErr("quota", `분당·일일 한도를 넘었습니다(429). 잠시 뒤 다시 보내거나 다른 모델로 바꿔 주세요.`);
     }
     if (status >= 500) {
@@ -625,6 +628,11 @@
       keyEl.placeholder = state.settings.key ? "저장됨 (바꾸려면 새로 입력)" : "AQ.… 또는 AIza…";
     }
     if (modelEl && document.activeElement !== modelEl) modelEl.value = state.settings.model;
+    const pick = $("#geminiModelPick");
+    if (pick && document.activeElement !== pick) {
+      const known = MODEL_PRESETS.some((m) => m.id === state.settings.model);
+      pick.value = known ? state.settings.model : "__custom";
+    }
     const mirror = $("#tgMirror");
     if (mirror) mirror.checked = !!state.settings.mirror;
     setEnginePill();
@@ -708,6 +716,8 @@
       saveSettings();
       renderSettingsCard();
       if (keyEl) keyEl.value = state.settings.key ? "••••••••••••••••" : "";
+      const res = $("#geminiResult");
+      if (res) { res.classList.remove("err"); res.textContent = `저장됨 · 모델 ${state.settings.model}`; }
       toast("이 브라우저에만 저장했습니다.");
     });
     $("#clearGemini")?.addEventListener("click", () => {
@@ -720,6 +730,23 @@
     });
     $("#loadModels")?.addEventListener("click", loadModels);
     $("#testGemini")?.addEventListener("click", testGemini);
+    // 모델 드롭다운 ↔ 모델 ID 입력 동기화
+    $("#geminiModelPick")?.addEventListener("change", (e) => {
+      const v = e.target.value;
+      const input = $("#geminiModel");
+      if (v === "__custom") { if (input) { input.value = ""; input.focus(); } return; }
+      if (input) input.value = v;
+      state.settings.model = v;
+      saveSettings();
+      renderSettingsCard();
+      toast(`모델을 ${v}로 바꿨습니다.`);
+    });
+    $("#geminiModel")?.addEventListener("input", () => {
+      const pick = $("#geminiModelPick");
+      if (!pick) return;
+      const v = String($("#geminiModel").value || "").trim();
+      pick.value = MODEL_PRESETS.some((m) => m.id === v) ? v : "__custom";
+    });
     $("#tgMirror")?.addEventListener("change", (e) => {
       state.settings.mirror = !!e.target.checked;
       saveSettings();

@@ -672,6 +672,10 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 .bbadge.gem{background:#eef1ff;color:#2f5fd0;border-color:#d5e0ff}
 .bbadge.cld{background:#fdf0e6;color:#a2553a;border-color:#f4d9c9}
 
+/* 모델 선택 드롭다운 */
+.field select{border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-size:12.5px;background:#f8fafd;width:100%}
+.field select:focus{outline:none;border-color:#b9d1f7;background:#fff;box-shadow:0 0 0 3px rgba(47,123,246,.1)}
+
 /* =========================================================
    PWA · 잠금 화면 (정적 배포판에서만 붙습니다)
    ========================================================= */
