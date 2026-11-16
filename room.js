@@ -420,7 +420,8 @@
     if (!pill) return;
     const hasKey = !!state.settings.key;
     pill.classList.toggle("on", hasKey);
-    pill.textContent = hasKey ? `Gemini · ${state.settings.model}` : "Gemini 키 없음";
+    pill.textContent = hasKey ? `⚡ ${String(state.settings.model).replace(/^gemini-/, "")}` : "Gemini 키 없음";
+    pill.title = hasKey ? `Gemini ${state.settings.model} · 이 브라우저에서 직접 호출` : "설정 탭에서 Gemini API 키를 넣어 주세요";
     const sendHint = $("#sendHint");
     if (sendHint) {
       sendHint.textContent = hasKey

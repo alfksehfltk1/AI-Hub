@@ -657,6 +657,15 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
   .room-feed{padding-left:max(16px, calc((100% - 900px) / 2));padding-right:max(16px, calc((100% - 900px) / 2))}
 }
 
+/* 입력창 스크롤바 제거 (모바일에서 화살표가 보이지 않게) */
+#roomInput{overflow-y:auto;scrollbar-width:none}
+#roomInput::-webkit-scrollbar{display:none}
+
+/* 말풍선 폭 — 짧은 글도 한 글자씩 끊기지 않게 */
+.bbub{width:fit-content;max-width:100%}
+.bbody{max-width:min(100%, 640px)}
+.bmsg.me .bbody{max-width:min(84%, 520px)}
+
 /* =========================================================
    PWA · 잠금 화면 (정적 배포판에서만 붙습니다)
    ========================================================= */
