@@ -29,9 +29,9 @@
       role: "총괄 · 검수 · 최종 정리",
       persona: [
         "너는 '피크리'다. 김병두 님의 총괄 비서이자 이 단톡방의 진행자다.",
-        "네 일은 오더를 정리하고, 부이·키링·뀨의 의견을 검수해 최종 결론과 다음 액션을 정하는 것이다.",
+        "네 일은 오더를 정리하고, 부이·키링·뀨·제미나이·클로드 다섯의 의견을 검수해 최종 결론과 다음 액션을 정하는 것이다.",
         "말투는 밝고 당차는 존댓말(~요/~습니다)을 쓰고, 숫자·기한·비용은 콕 집어 말한다.",
-        "라운드 마지막 차례에서는 앞선 AI 의견을 한 줄로 묶고 '결론 → 다음 할 일'을 제시한다.",
+        "여섯 명 중 마지막 차례에서는 앞선 다섯 의견을 한두 줄로 묶고 '결론 → 다음 할 일'만 짧게 제시한다(300자 이내).",
         "혼자 독단하지 말고 위험한 부분(계정 제재·비용·마감)은 먼저 짚는다.",
       ].join(" "),
     },
@@ -64,15 +64,34 @@
         "말투는 담백한 존댓말. '맞습니다, 다만' 구조로 말하고, 확인 안 된 건 확인 안 됐다고 말한다.",
       ].join(" "),
     },
+    gemini: {
+      name: "제미나이", badge: "제미나이 AI", cls: "gem",
+      role: "구글 검색 · 데이터 분석",
+      persona: [
+        "너는 '제미나이'다. 구글·유튜브·검색 트렌드와 방대한 데이터 분석 담당이다.",
+        "네 일은 최신 정보와 수치를 근거로 팩트체크하고, 검색해 확인해야 할 것을 콕 집어 주는 것이다.",
+        "말투는 또박또박한 존댓말. '확인된 사실 / 확인 필요'를 구분해서 말하고, 숫자는 단위까지 붙인다.",
+      ].join(" "),
+    },
+    claude: {
+      name: "클로드", badge: "클로드 AI", cls: "cld",
+      role: "논리 검증 · 카피라이팅",
+      persona: [
+        "너는 '클로드'다. 날카로운 논리 검증·리스크 지적·구조화·고품격 카피라이팅 담당이다.",
+        "네 일은 주장의 논리적 구멍과 빠진 전제를 짚고, 답을 ①②③처럼 구조화해 정리하는 것이다.",
+        "말투는 정중하지만 단호한 존댓말. 필요한 경우 더 나은 문장 예시를 한 줄 붙인다.",
+      ].join(" "),
+    },
   };
-  const ROUND = ["bui", "keyring", "kkyu", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
-  const NAME2KEY = { 피크리: "pikri", 부이: "bui", 키링: "keyring", 뀨: "kkyu" };
+  const ROUND = ["bui", "keyring", "kkyu", "gemini", "claude", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
+  const NAME2KEY = { 피크리: "pikri", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
 
   const RULES = [
     "[대화 규칙]",
     "- 사용자는 '@방장'이라고 부른다. 실명은 쓰지 않는다.",
-    "- 답은 2~4문장, 380자 이내. 이모지는 최대 1개.",
+    "- 답은 2~3문장, 300자 이내. 여섯 명이 빠르게 릴레이하므로 길게 쓰지 않는다. 이모지는 최대 1개.",
     "- 다른 AI의 말을 이어받을 때는 '@부이'처럼 멘션해서 누구에게 하는 말인지 밝힌다.",
+    "- 앞사람과 같은 말을 반복하지 말고, 네 역할에서 본 새 정보·반론·다음 행동만 보탠다.",
     "- 오더보드 요약에 없는 사실을 지어내지 않는다. 모르면 '확인 필요'라고 말한다.",
     "- 인사·사과를 반복하지 말고 바로 본론으로 간다.",
     "- 실행 여부는 '내가 한다 / 다른 AI가 한다 / 방장이 해야 한다'로 나눠 말한다.",
@@ -84,6 +103,8 @@
     bui: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#f2f0ff"/><circle cx="20" cy="20" r="13" fill="none" stroke="#7a6cf0" stroke-width="7.5"/><circle cx="20" cy="20" r="13" fill="none" stroke="#42a5ff" stroke-width="7.5" stroke-dasharray="10.2 10.2" stroke-dashoffset="5.1"/><circle cx="20" cy="20" r="4.6" fill="#ffffff"/></svg>`,
     keyring: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#ffd83d"/><path d="M23.2 6.5 12.4 21.6h6.2l-2 11.9 11-15.4h-6.3z" fill="#7a4b00"/></svg>`,
     kkyu: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e8f1ff"/><path d="M14 10.5 29.5 20 14 29.5z" fill="#2f7bf6" stroke="#2f7bf6" stroke-width="3" stroke-linejoin="round"/></svg>`,
+    gemini: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#eef1ff"/><path d="M20 6.5c1.5 6.4 4.6 9.5 11 11-6.4 1.5-9.5 4.6-11 11-1.5-6.4-4.6-9.5-11-11 6.4-1.5 9.5-4.6 11-11z" fill="#4285f4"/><path d="M30.5 25c.7 2.6 1.9 3.8 4.5 4.5-2.6.7-3.8 1.9-4.5 4.5-.7-2.6-1.9-3.8-4.5-4.5 2.6-.7 3.8-1.9 4.5-4.5z" fill="#a142f4"/></svg>`,
+    claude: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#fdf0e6"/><g stroke="#d97757" stroke-width="3" stroke-linecap="round"><path d="M20 9v22"/><path d="M10.5 14.5l19 11"/><path d="M29.5 14.5l-19 11"/></g><circle cx="20" cy="20" r="3.2" fill="#b85c3c"/></svg>`,
     me: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#4f74e0"/><circle cx="20" cy="15.5" r="6" fill="#ffffff" opacity=".95"/><path d="M7.5 36c1.6-7.2 6.6-10.6 12.5-10.6S30.9 28.8 32.5 36z" fill="#ffffff" opacity=".95"/></svg>`,
   };
 
@@ -125,7 +146,7 @@
 
   function mentionHTML(text) {
     return esc(text)
-      .replace(/@(피크리|부이|피크리|뀨|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
+      .replace(/@(피크리|부이|키링|뀨|제미나이|클로드|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
   }
   function toast(msg) {
@@ -209,7 +230,7 @@
       parts.push("", "[이번 라운드에서 앞서 답한 AI]");
       roundReplies.forEach((r) => parts.push(`${AI[r.key].name}: ${r.text}`));
     }
-    parts.push("", `[지금 네 차례다] '${AI[aiKey].name}'로서 방장에게 답해라. 필요하면 다른 AI를 @로 불러라.`);
+    parts.push("", `[지금 네 차례다] 여섯 명이 릴레이 중이다. '${AI[aiKey].name}'로서 방장에게 2~3문장으로 답해라. 필요하면 다른 AI를 @로 불러라.`);
     return {
       systemInstruction: { parts: [{ text: `${AI[aiKey].persona}\n\n${RULES}` }] },
       contents: [{ role: "user", parts: [{ text: parts.join("\n") }] }],
@@ -558,7 +579,7 @@
     const raw = String(input.value || "").trim();
     if (!raw) return;
     let targets = [state.target];
-    const lead = /^@(피크리|부이|키링|뀨)(?=\s|$|[,.!?~])/.exec(raw);
+    const lead = /^@(피크리|부이|키링|뀨|제미나이|클로드)(?=\s|$|[,.!?~])/.exec(raw);
     if (lead) targets = [lead[1]];
     input.value = "";
     input.style.height = "auto";
@@ -587,7 +608,7 @@
     if (lastFixed.length) {
       lines.push(`최근 결론은 ${lastFixed.map((o) => `${o.id} '${o.text.slice(0, 34)}…'`).join(", ")} 입니다.`);
     }
-    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 제가 이어서 답합니다. 편하게 지시해 주세요! 🟢`);
+    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 제미나이 → 클로드 → 제가 이어서 답합니다. 편하게 지시해 주세요! 🟢`);
     state.msgs.push({
       id: "seed-2", at: nowISO(), who: "pikri", kind: "msg",
       text: lines.join(" "),

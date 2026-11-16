@@ -662,6 +662,16 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 #roomInput::-webkit-scrollbar{display:none}
 
 
+/* 멤버 확장(6인) — 대상 칩 가로 스크롤을 깔끔하게 */
+.room-composer .chips{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+  mask-image:linear-gradient(to right,#000 92%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to right,#000 92%,transparent 100%);padding-right:14px}
+.room-composer .chips .chip-target{scroll-snap-align:start}
+.profile.gemini{border-color:#c9d9ff;background:linear-gradient(180deg,#f7f9ff,#eef1ff)}
+.profile.claude{border-color:#f6d8c8;background:linear-gradient(180deg,#fffaf6,#fdf0e6)}
+.bbadge.gem{background:#eef1ff;color:#2f5fd0;border-color:#d5e0ff}
+.bbadge.cld{background:#fdf0e6;color:#a2553a;border-color:#f4d9c9}
+
 /* =========================================================
    PWA · 잠금 화면 (정적 배포판에서만 붙습니다)
    ========================================================= */

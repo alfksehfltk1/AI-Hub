@@ -15,8 +15,10 @@
     bui:     { name: "부이",   badge: "AI",       badgeClass: "",      role: "원고 · 카피 · 톤",       state: "호출 시" },
     keyring: { name: "키링",   badge: "AI",       badgeClass: "",      role: "인프라 · 5분 폴링",      state: "5분 주기" },
     kkyu:    { name: "뀨",     badge: "AI",       badgeClass: "",      role: "오더보드 감시 · 팩트체크", state: "웹훅" },
+    gemini:  { name: "제미나이", badge: "제미나이 AI", badgeClass: "",    role: "구글 검색 · 데이터 분석", state: "호출 시" },
+    claude:  { name: "클로드",   badge: "클로드 AI",   badgeClass: "",    role: "논리 검증 · 카피라이팅", state: "호출 시" },
   };
-  const NAME2KEY = { 피크리: "pikri", 부이: "bui", 키링: "keyring", 뀨: "kkyu" };
+  const NAME2KEY = { 피크리: "pikri", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
   const CHANNEL_LABEL = { telegram: "텔레그램", sheet: "시트", kkyu: "뀨" };
 
   /* ---------------- 아바타 ---------------- */
@@ -25,6 +27,8 @@
     bui: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#f2f0ff"/><circle cx="20" cy="20" r="13" fill="none" stroke="#7a6cf0" stroke-width="7.5"/><circle cx="20" cy="20" r="13" fill="none" stroke="#42a5ff" stroke-width="7.5" stroke-dasharray="10.2 10.2" stroke-dashoffset="5.1"/><circle cx="20" cy="20" r="4.6" fill="#ffffff"/></svg>`,
     keyring: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#ffd83d"/><path d="M23.2 6.5 12.4 21.6h6.2l-2 11.9 11-15.4h-6.3z" fill="#7a4b00"/></svg>`,
     kkyu: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e8f1ff"/><path d="M14 10.5 29.5 20 14 29.5z" fill="#2f7bf6" stroke="#2f7bf6" stroke-width="3" stroke-linejoin="round"/></svg>`,
+    gemini: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#eef1ff"/><path d="M20 6.5c1.5 6.4 4.6 9.5 11 11-6.4 1.5-9.5 4.6-11 11-1.5-6.4-4.6-9.5-11-11 6.4-1.5 9.5-4.6 11-11z" fill="#4285f4"/><path d="M30.5 25c.7 2.6 1.9 3.8 4.5 4.5-2.6.7-3.8 1.9-4.5 4.5-.7-2.6-1.9-3.8-4.5-4.5 2.6-.7 3.8-1.9 4.5-4.5z" fill="#a142f4"/></svg>`,
+    claude: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#fdf0e6"/><g stroke="#d97757" stroke-width="3" stroke-linecap="round"><path d="M20 9v22"/><path d="M10.5 14.5l19 11"/><path d="M29.5 14.5l-19 11"/></g><circle cx="20" cy="20" r="3.2" fill="#b85c3c"/></svg>`,
     me: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#4f74e0"/><circle cx="20" cy="15.5" r="6" fill="#ffffff" opacity=".95"/><path d="M7.5 36c1.6-7.2 6.6-10.6 12.5-10.6S30.9 28.8 32.5 36z" fill="#ffffff" opacity=".95"/></svg>`,
   };
   const avatarOf = (k) => AVATAR[k] || AVATAR.me;
@@ -79,7 +83,7 @@
 
   /* ---------------- 렌더: 상단 ---------------- */
   function renderProfiles() {
-    const order = ["pikri", "bui", "keyring", "kkyu"];
+    const order = ["pikri", "bui", "keyring", "kkyu", "gemini", "claude"];
     $("#profiles").innerHTML = order.map((k) => {
       const p = AI[k];
       return `<div class="profile ${k}" title="${esc(p.role)} · ${esc(p.state)}">
