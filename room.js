@@ -166,7 +166,7 @@
   /* ---------------- 오더보드 맥락 ---------------- */
   function snapshot() { return window.AIHUB_SNAPSHOT || { orders: [], threads: [], snapshot_at: "" }; }
 
-  function boardSummary(limit = 7) {
+  function boardSummary(limit = 12) {
     const snap = snapshot();
     const orders = (snap.orders || []).slice(-limit);
     if (!orders.length) return "(오더보드 스냅샷 없음)";
@@ -175,7 +175,7 @@
       const op = Object.values(o.opinions || {}).filter(Boolean).join(" / ");
       const line = `${o.id} [${o.status}] ${o.text}`;
       const tail = verdict ? ` → 결론: ${verdict}` : (op ? ` → 의견: ${op}` : "");
-      return (line + tail).slice(0, 220);
+      return (line + tail).slice(0, 260);
     }).join("\n");
   }
 
@@ -517,8 +517,9 @@
   /* ---------------- 텔레그램 미러 ---------------- */
   async function mirrorToTelegram(userText, replies) {
     if (!state.settings.mirror) return;
-    const token = String((state.tg && state.tg.token) || "").trim();
-    const chatId = String((state.tg && state.tg.chatId) || "").trim();
+    const shared = readJSON(LS_SETTINGS, {});
+    const token = String(shared.token || "").trim();
+    const chatId = String(shared.chatId || "").trim();
     if (!token || !chatId) return;
     const body = [`📌 AI 허브 단톡방`, `방장: ${userText}`, ...replies.map((r) => `${AI[r.key].name}: ${r.text}`)].join("\n\n");
     const chunks = [];
@@ -556,7 +557,7 @@
     const raw = String(input.value || "").trim();
     if (!raw) return;
     let targets = [state.target];
-    const lead = /^@(피크리|부이|키링|뀨)\b/.exec(raw);
+    const lead = /^@(피크리|부이|키링|뀨)(?=\s|$|[,.!?~])/.exec(raw);
     if (lead) targets = [lead[1]];
     input.value = "";
     input.style.height = "auto";

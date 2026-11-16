@@ -649,6 +649,14 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
   .engine-pill{max-width:96px}
 }
 
+/* 데스크톱 — 카톡 PC처럼 가운데 컬럼으로 모아 준다 */
+@media (min-width:1000px){
+  .room-bar, .room-composer{padding-left:max(16px, calc((100% - 900px) / 2));padding-right:max(16px, calc((100% - 900px) / 2))}
+  .bfeed-inner{max-width:860px}
+  .room-composer .chips, .room-composer .inputrow, .composer-foot{max-width:860px}
+  .room-feed{padding-left:max(16px, calc((100% - 900px) / 2));padding-right:max(16px, calc((100% - 900px) / 2))}
+}
+
 /* =========================================================
    PWA · 잠금 화면 (정적 배포판에서만 붙습니다)
    ========================================================= */
