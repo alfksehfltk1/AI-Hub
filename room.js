@@ -144,6 +144,8 @@
     return `${y}년 ${mo}월 ${d}일 ${wd}요일`;
   }
 
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
   function mentionHTML(text) {
     return esc(text)
       .replace(/@(피크리|부이|키링|뀨|제미나이|클로드|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
@@ -481,7 +483,7 @@
     const key = String(state.settings.key || "").trim();
     const model = String(state.settings.model || DEFAULT_MODEL).trim();
     if (!key) {
-      pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini API 키가 없습니다. [설정] 탭에서 키를 넣으면 4명이 바로 답합니다." });
+      pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini API 키가 없습니다. [설정] 탭에서 키를 넣으면 6명이 바로 답합니다." });
       goSettings();
       return;
     }
@@ -501,13 +503,31 @@
       updateRoundPill(i + 1, keys.length, AI[k].name);
       state.abort = new AbortController();
       const t0 = performance.now();
-      try {
-        const text = await streamGemini({
-          model, key,
-          payload: buildPayload(k, userText, roundReplies),
-          signal: state.abort.signal,
-          onDelta: (t) => { m.text = t; paintStreaming(m); },
-        });
+      let text = null;
+      let lastErr = null;
+      // 한도(429)·서버 오류는 잠시 기다렸다 다시 시도한다 (무료 등급은 분당 한도가 빡빡하다)
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          text = await streamGemini({
+            model, key,
+            payload: buildPayload(k, userText, roundReplies),
+            signal: state.abort.signal,
+            onDelta: (t) => { m.text = t; paintStreaming(m); },
+          });
+          lastErr = null;
+          break;
+        } catch (err) {
+          lastErr = err;
+          if (err && err.kind === "abort") break;
+          const retryable = err && (err.kind === "quota" || err.kind === "server" || err.kind === "network");
+          if (!retryable || attempt === 2) break;
+          updateRoundPill(i + 1, keys.length, `${AI[k].name} 재시도`);
+          await sleep(attempt === 0 ? 5000 : 12000);
+          state.abort = new AbortController();
+        }
+      }
+
+      if (text != null && lastErr == null) {
         m.streaming = false;
         m.text = text || "(답이 비었습니다)";
         m.ms = Math.round(performance.now() - t0);
@@ -515,17 +535,18 @@
         renderFeed(true);
         saveRoom();
         roundReplies.push({ key: k, text: m.text });
-      } catch (err) {
+      } else if (lastErr && lastErr.kind === "abort") {
         m.streaming = false;
-        if (err && err.kind === "abort") {
-          m.text = m.text ? `${m.text}\n\n(중지됨)` : "(중지됨)";
-          renderFeed(true); saveRoom(); aborted = true; break;
-        }
+        m.text = m.text ? `${m.text}\n\n(중지됨)` : "(중지됨)";
+        renderFeed(true); saveRoom(); aborted = true; break;
+      } else {
         // 이 AI 버블은 오류로 바꾼다
+        const err = lastErr || new GemErr("empty", "응답을 받지 못했습니다.");
+        m.streaming = false;
         state.msgs = state.msgs.filter((x) => x.id !== m.id);
-        pushMsg({ who: k, kind: "err", text: (err && err.message) || String(err) });
-        hardStop = true;
-        break;
+        pushMsg({ who: k, kind: "err", text: err.message || String(err) });
+        // 키·모델 자체가 안 되는 오류면 라운드를 멈추고, 한도/일시 오류면 다음 AI로 넘어간다
+        if (err.kind === "key" || err.kind === "model") { hardStop = true; break; }
       }
       state.abort = null;
     }
