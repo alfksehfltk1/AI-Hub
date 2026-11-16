@@ -1170,7 +1170,9 @@
       toast("이 브라우저에만 저장했습니다.");
     });
     $("#clearGemini")?.addEventListener("click", () => {
-      state.settings = { key: "", model: state.settings.model || DEFAULT_MODEL, mirror: false };
+      // Gemini 키만 지운다 — 뀨 웹훅·Claude 키·동시전송 설정은 그대로 둔다
+      state.settings.key = "";
+      state.settings.mirror = false;
       saveSettings();
       const keyEl = $("#geminiKey"); if (keyEl) keyEl.value = "";
       const out = $("#geminiResult"); if (out) out.textContent = "키를 지웠습니다.";
