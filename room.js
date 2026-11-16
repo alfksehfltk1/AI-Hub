@@ -13,6 +13,9 @@
   const LS_ROOM = "aihub.room.v2";      // 단톡방 대화 기록
   const MAX_MSGS = 300;
   const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta";
+  const CLAUDE_ENDPOINT = "https://api.anthropic.com/v1/messages";
+  const CLAUDE_VERSION = "2023-06-01";
+  const DEFAULT_CLAUDE_MODEL = "claude-3-5-sonnet-latest";
   const DEFAULT_MODEL = "gemini-4-hydrogen";
   const MODEL_PRESETS = [
     { id: "gemini-4-argon", label: "아르곤 · 최상위 (유료 등급 필요)" },
@@ -30,10 +33,21 @@
       role: "총괄 · 검수 · 최종 정리",
       persona: [
         "너는 '피크리'다. 김병두 님의 총괄 비서이자 이 단톡방의 진행자다.",
-        "네 일은 오더를 정리하고, 부이·키링·뀨·제미나이·클로드 다섯의 의견을 검수해 최종 결론과 다음 액션을 정하는 것이다.",
+        "네 일은 오더를 정리하고, 병두2·부이·키링·뀨·제미나이·클로드 여섯의 의견을 검수해 최종 결론과 다음 액션을 정하는 것이다.",
         "말투는 밝고 당차는 존댓말(~요/~습니다)을 쓰고, 숫자·기한·비용은 콕 집어 말한다.",
-        "여섯 명 중 마지막 차례에서는 앞선 다섯 의견을 한두 줄로 묶고 '결론 → 다음 할 일'만 짧게 제시한다(300자 이내).",
+        "일곱 명 중 마지막 차례에서는 앞선 여섯 의견을 한두 줄로 묶고 '결론 → 다음 할 일'만 짧게 제시한다(300자 이내).",
         "혼자 독단하지 말고 위험한 부분(계정 제재·비용·마감)은 먼저 짚는다.",
+      ].join(" "),
+    },
+    byeongdu2: {
+      name: "병두2", badge: "세컨드 피클 · 분산담당", cls: "second",
+      role: "리서치 · 원고 · 체험단 탐색 (분산담당)",
+      persona: [
+        "너는 '병두2'다. 김병두 님의 2호 피클(세컨드 피클)로 분산담당이다.",
+        "네 일은 피크리와 리서치·원고·체험단 탐색을 반씩 나눠 맡는 것이다. 피크리가 총괄·검수·오더 정리를 맡으니, 너는 조사·자료 수집·원고 초안·체험단 후보 찾기 쪽을 직접 가져간다.",
+        "말투는 병두 님처럼 빠른 반말에 살짝 능글맞은 경상도 말투(~다, ~지, ~봐라)를 쓴다.",
+        "다른 AI가 이미 말한 건 반복하지 않고, 네가 실제로 맡아서 할 일과 조사 결과만 보탠다.",
+        "토큰을 아끼는 게 원칙이다. 긴 설명 대신 결론·후보·다음 한 걸음만 적는다.",
       ].join(" "),
     },
     bui: {
@@ -84,13 +98,13 @@
       ].join(" "),
     },
   };
-  const ROUND = ["bui", "keyring", "kkyu", "gemini", "claude", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
-  const NAME2KEY = { 피크리: "pikri", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
+  const ROUND = ["bui", "keyring", "kkyu", "gemini", "claude", "byeongdu2", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
+  const NAME2KEY = { 피크리: "pikri", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
 
   const RULES = [
     "[대화 규칙]",
     "- 사용자는 '@방장'이라고 부른다. 실명은 쓰지 않는다.",
-    "- 답은 2~3문장, 300자 이내. 여섯 명이 빠르게 릴레이하므로 길게 쓰지 않는다. 이모지는 최대 1개.",
+    "- 답은 2~3문장, 300자 이내. 일곱 명이 빠르게 릴레이하므로 길게 쓰지 않는다. 이모지는 최대 1개.",
     "- 다른 AI의 말을 이어받을 때는 '@부이'처럼 멘션해서 누구에게 하는 말인지 밝힌다.",
     "- 앞사람과 같은 말을 반복하지 말고, 네 역할에서 본 새 정보·반론·다음 행동만 보탠다.",
     "- 오더보드 요약에 없는 사실을 지어내지 않는다. 모르면 '확인 필요'라고 말한다.",
@@ -101,6 +115,7 @@
   /* ---------------- 아바타 ---------------- */
   const AVATAR = {
     pikri: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#2eb872"/><circle cx="30" cy="10" r="4.6" fill="#ffcf3f"/><text x="20" y="27.5" font-size="21" font-weight="800" text-anchor="middle" fill="#ffffff" font-family="sans-serif">ㅍ</text></svg>`,
+    byeongdu2: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e5edff"/><circle cx="15.5" cy="21" r="7.6" fill="none" stroke="#4f74e0" stroke-width="4"/><circle cx="26.5" cy="24.5" r="5.4" fill="none" stroke="#7f9bea" stroke-width="3.4"/><circle cx="29.5" cy="10.5" r="3.6" fill="#ffcf3f"/></svg>`,
     bui: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#f2f0ff"/><circle cx="20" cy="20" r="13" fill="none" stroke="#7a6cf0" stroke-width="7.5"/><circle cx="20" cy="20" r="13" fill="none" stroke="#42a5ff" stroke-width="7.5" stroke-dasharray="10.2 10.2" stroke-dashoffset="5.1"/><circle cx="20" cy="20" r="4.6" fill="#ffffff"/></svg>`,
     keyring: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#ffd83d"/><path d="M23.2 6.5 12.4 21.6h6.2l-2 11.9 11-15.4h-6.3z" fill="#7a4b00"/></svg>`,
     kkyu: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e8f1ff"/><path d="M14 10.5 29.5 20 14 29.5z" fill="#2f7bf6" stroke="#2f7bf6" stroke-width="3" stroke-linejoin="round"/></svg>`,
@@ -150,7 +165,7 @@
 
   function mentionHTML(text) {
     return esc(text)
-      .replace(/@(피크리|부이|키링|뀨|제미나이|클로드|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
+      .replace(/@(병두2|피크리|부이|키링|뀨|제미나이|클로드|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
   }
   function toast(msg) {
@@ -179,6 +194,8 @@
       mirror: !!s.mirror,
       kkyuUrl: String(s.kkyuUrl || ""),
       kkyuSecret: String(s.kkyuSecret || ""),
+      claudeKey: String(s.claudeKey || ""),
+      claudeModel: String(s.claudeModel || DEFAULT_CLAUDE_MODEL),
       relay: (s.relay === true || s.relay === false) ? s.relay : null, // null = 자동(자격증명 있으면 켜짐)
     };
     const shared = readJSON(LS_SETTINGS, {});
@@ -218,6 +235,23 @@
       "",
       `— AI 허브 · ${orderStamp()} · 대상 ${named.length ? named.join(" · ") : "모두에게"}`,
     ].join("\n");
+  }
+
+  /**
+   * 다음 오더 번호/시트 행을 스냅샷에서 계산한다.
+   * 시트 구조: 1행 헤더, 2행부터 O-001… → O-010 이면 행 11. 따라서 다음 = 최대번호+1 / 그 행.
+   * (정적 PWA는 시트를 직접 쓸 수 없어 ‘예상값’이다. 실제 행은 텔레그램→시트 폴링(피크리·키링)이나
+   *  Apps Script 브리지가 만들며, 같은 +1 규칙을 쓰므로 대개 일치한다.)
+   */
+  function nextOrderRef() {
+    const orders = snapshot().orders || [];
+    let maxNum = 0;
+    for (const o of orders) {
+      const m = /O-(\d+)/.exec(String((o && o.id) || ""));
+      if (m) maxNum = Math.max(maxNum, Number(m[1]));
+    }
+    const num = maxNum + 1;
+    return { id: `O-${String(num).padStart(3, "0")}`, row: num + 1, estimated: true };
   }
 
   async function sendTelegramOrder(text) {
@@ -268,11 +302,16 @@
     }
   }
 
-  function kkyuPayload(summary, extra) {
+  /** 뀨 웹훅 규격 — 뀨 수신 설정이 요구하는 필드 그대로 (secret · order_id · sheet_row · summary · write_column) */
+  function kkyuPayload(summary, ref, extra) {
     return Object.assign({
       secret: String(state.settings.kkyuSecret || ""),
-      source: "ai-hub",
+      order_id: ref ? ref.id : "",
+      sheet_row: ref ? ref.row : 0,
+      write_column: "I",            // 뀨 의견이 들어갈 열
       summary: summary,
+      source: "ai-hub",
+      created_at: orderStamp(),
     }, extra || {});
   }
 
@@ -294,7 +333,9 @@
     if (!bits.length) return "";
     const cls = bad.length ? (ok.length || nc.length ? "part" : "fail") : (nc.length && !ok.length ? "wait" : "ok");
     const detail = [r.tgDetail, r.kkyuDetail].filter(Boolean).join(" / ");
-    return `<span class="relay-badge ${cls}" title="${esc(detail || bits.join(" · "))}">📡 ${esc(bits.join(" · "))}</span>`;
+    const ref = r.ref ? `${r.ref.id} · 시트 ${r.ref.row}행${r.ref.estimated ? "(예상)" : ""}` : "";
+    const tip = [ref, detail].filter(Boolean).join(" / ") || bits.join(" · ");
+    return `<span class="relay-badge ${cls}" title="${esc(tip)}">📡 ${esc(bits.join(" · "))}</span>`;
   }
 
   async function relayOrder(m, text, targets) {
@@ -302,13 +343,14 @@
     m.relay = { pending: true };
     paintRelay(m);
     const summary = orderText(text, targets);
+    const ref = nextOrderRef();
     const [tg, kkyu] = await Promise.all([
       sendTelegramOrder(summary),
-      postKkyu(kkyuPayload(summary, { text: String(text || ""), targets: targets || [], at: nowISO() })),
+      postKkyu(kkyuPayload(summary, ref, { text: String(text || ""), targets: targets || [], at: nowISO() })),
     ]);
     const norm = (v) => (v === "ok" || v === "nc" || v === "skip" ? v : "fail");
     m.relay = {
-      tg: norm(tg), kkyu: norm(kkyu),
+      tg: norm(tg), kkyu: norm(kkyu), ref,
       tgDetail: String(tg).startsWith("fail:") ? String(tg).slice(5) : "",
       kkyuDetail: String(kkyu).startsWith("fail:") ? String(kkyu).slice(5) : "",
       at: nowISO(),
@@ -382,7 +424,7 @@
       parts.push("", "[이번 라운드에서 앞서 답한 AI]");
       roundReplies.forEach((r) => parts.push(`${AI[r.key].name}: ${r.text}`));
     }
-    parts.push("", `[지금 네 차례다] 여섯 명이 릴레이 중이다. '${AI[aiKey].name}'로서 방장에게 2~3문장으로 답해라. 필요하면 다른 AI를 @로 불러라.`);
+    parts.push("", `[지금 네 차례다] 일곱 명이 릴레이 중이다. '${AI[aiKey].name}'로서 방장에게 2~3문장으로 답해라. 필요하면 다른 AI를 @로 불러라.`);
     return {
       systemInstruction: { parts: [{ text: `${AI[aiKey].persona}\n\n${RULES}` }] },
       contents: [{ role: "user", parts: [{ text: parts.join("\n") }] }],
@@ -498,6 +540,100 @@
       }
     }
     return out.trim();
+  }
+
+  /* ---------------- Claude(Anthropic) 호출 ---------------- */
+  function buildClaudePayload(aiKey, userText, roundReplies) {
+    const g = buildPayload(aiKey, userText, roundReplies);
+    return {
+      model: String(state.settings.claudeModel || DEFAULT_CLAUDE_MODEL).trim(),
+      max_tokens: 1024,
+      temperature: 0.9,
+      system: g.systemInstruction.parts[0].text,
+      messages: [{ role: "user", content: g.contents[0].parts[0].text }],
+      stream: true,
+    };
+  }
+
+  function mapClaudeHttp(status, body) {
+    const msg = (body && body.error && (body.error.message || body.error.type)) || "";
+    if (status === 401 || /invalid x-api-key|authentication_error/i.test(msg)) {
+      return new GemErr("key", `Claude API 키가 올바르지 않습니다(401). 설정 → Claude API 키를 확인해 주세요. ${msg}`.trim());
+    }
+    if (status === 403 || /permission_error/i.test(msg)) {
+      return new GemErr("key", `이 키로는 Claude를 부를 수 없습니다(403). ${msg}`.trim());
+    }
+    if (status === 404 || /not_found_error/i.test(msg)) {
+      return new GemErr("model", `'${state.settings.claudeModel}' 모델을 찾을 수 없습니다(404). 모델 ID를 바꿔 주세요. ${msg}`.trim());
+    }
+    if (status === 429) return new GemErr("quota", `Claude 분당·일일 한도를 넘었습니다(429). ${msg}`.trim());
+    if (status >= 500) return new GemErr("server", `Claude 서버 오류(${status}). 잠시 뒤 다시 시도해 주세요.`);
+    if (status === 400) return new GemErr("http", `Claude 요청이 거절됐습니다(400). ${msg}`.trim());
+    return new GemErr("http", `Claude 호출 실패(${status}) ${msg}`.trim());
+  }
+
+  async function streamClaudeOnce({ key, payload, onDelta, signal }) {
+    let res;
+    try {
+      res = await fetch(CLAUDE_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": CLAUDE_VERSION,
+          "anthropic-dangerous-direct-browser-access": "true", // 브라우저 직접 호출 허용
+        },
+        body: JSON.stringify(payload),
+        signal,
+      });
+    } catch (e) {
+      if (e && e.name === "AbortError") throw new GemErr("abort", "중지했습니다.");
+      throw new GemErr("network", `Claude로 보내지 못했습니다(네트워크·CORS). (${(e && e.message) || e})`);
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw mapClaudeHttp(res.status, body);
+    }
+
+    if (!res.body || !res.body.getReader) {
+      const j = await res.json();
+      const text = ((j.content || []).filter((c) => c.type === "text").map((c) => c.text || "").join("")).trim();
+      if (text) onDelta(text);
+      return text;
+    }
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder("utf-8");
+    let buf = "";
+    let out = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, idx).trim();
+        buf = buf.slice(idx + 1);
+        if (!line.startsWith("data:")) continue;
+        const raw = line.slice(5).trim();
+        if (!raw || raw === "[DONE]") continue;
+        let d;
+        try { d = JSON.parse(raw); } catch (_) { continue; }
+        if (d.type === "error") throw mapClaudeHttp(d.error && d.error.status ? 400 : 400, d);
+        if (d.type === "content_block_delta" && d.delta && d.delta.type === "text_delta") {
+          out += d.delta.text || "";
+          onDelta(out);
+        }
+        if (d.type === "message_stop" && !out.trim()) {
+          throw new GemErr("empty", "Claude가 빈 답을 보냈습니다. 다시 보내 주세요.");
+        }
+      }
+    }
+    return out.trim();
+  }
+
+  async function streamClaude(opts) {
+    return await streamClaudeOnce(opts);
   }
 
   /* ---------------- 렌더 ---------------- */
@@ -619,7 +755,7 @@
     if (sendHint) {
       sendHint.textContent = hasKey
         ? `Enter 전송 · ${state.settings.model}`
-        : "설정에서 Gemini 키를 넣으면 6명이 바로 답합니다";
+        : "설정에서 Gemini 키를 넣으면 7명이 바로 답합니다";
     }
     const keyState = $("#geminiKeyState");
     if (keyState) keyState.textContent = hasKey ? "저장됨" : "없음";
@@ -632,15 +768,22 @@
     if (state.running) return;
     const key = String(state.settings.key || "").trim();
     const model = String(state.settings.model || DEFAULT_MODEL).trim();
+    const claudeKey = String(state.settings.claudeKey || "").trim();
+    const isAll = targets.includes("모두에게");
+    let keys = isAll ? ROUND.slice() : targets.map((n) => NAME2KEY[n]).filter(Boolean);
     if (!key) {
-      pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini API 키가 없습니다. [설정] 탭에서 키를 넣으면 6명이 바로 답합니다." });
-      goSettings();
-      return;
+      // Gemini 키가 없어도 클로드 API 키가 있으면 클로드만이라도 진짜로 부를 수 있다
+      if (claudeKey && keys.includes("claude")) {
+        keys = ["claude"];
+        pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini 키가 없어 이번엔 클로드(Claude API)만 답합니다." });
+      } else {
+        pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini API 키가 없습니다. [설정] 탭에서 키를 넣으면 7명이 바로 답합니다.(Claude API 키만으로는 클로드 혼자만 답합니다)" });
+        goSettings();
+        return;
+      }
     }
     state.running = true;
     setRunningUI(true);
-    const isAll = targets.includes("모두에게");
-    const keys = isAll ? ROUND.slice() : targets.map((n) => NAME2KEY[n]).filter(Boolean);
     const roundReplies = [];
     let aborted = false;
     let hardStop = false;
@@ -655,15 +798,24 @@
       const t0 = performance.now();
       let text = null;
       let lastErr = null;
+      const useClaude = k === "claude" && !!claudeKey; // 키 있으면 진짜 Claude, 없으면 Gemini 페르소나
       // 한도(429)·서버 오류는 잠시 기다렸다 다시 시도한다 (무료 등급은 분당 한도가 빡빡하다)
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          text = await streamGemini({
-            model, key,
-            payload: buildPayload(k, userText, roundReplies),
-            signal: state.abort.signal,
-            onDelta: (t) => { m.text = t; paintStreaming(m); },
-          });
+          const onDelta = (t) => { m.text = t; paintStreaming(m); };
+          text = useClaude
+            ? await streamClaude({
+                key: claudeKey,
+                payload: buildClaudePayload(k, userText, roundReplies),
+                signal: state.abort.signal,
+                onDelta,
+              })
+            : await streamGemini({
+                model, key,
+                payload: buildPayload(k, userText, roundReplies),
+                signal: state.abort.signal,
+                onDelta,
+              });
           lastErr = null;
           break;
         } catch (err) {
@@ -770,7 +922,9 @@
     const raw = String(input.value || "").trim();
     if (!raw) return;
     let targets = [state.target];
-    const lead = /^@(피크리|부이|키링|뀨|제미나이|클로드)(?=\s|$|[,.!?~])/.exec(raw);
+    // '@키링' · '키링아' · '키링,' 처럼 부르면 그 AI만 답한다
+    const lead = /^@(병두2|피크리|부이|키링|뀨|제미나이|클로드)(?=\s|$|[,.!?~])/.exec(raw)
+      || /^(병두2|피크리|부이|키링|뀨|제미나이|클로드)(?:\s*[아야])?(?=[\s,.!?~]|$)/.exec(raw);
     if (lead) targets = [lead[1]];
     input.value = "";
     input.style.height = "auto";
@@ -801,7 +955,7 @@
     if (lastFixed.length) {
       lines.push(`최근 결론은 ${lastFixed.map((o) => `${o.id} '${o.text.slice(0, 34)}…'`).join(", ")} 입니다.`);
     }
-    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 제미나이 → 클로드 → 제가 이어서 답합니다. 편하게 지시해 주세요! 🟢`);
+    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 제미나이 → 클로드 → 병두2 → 제가 이어서 답합니다. '키링아', '뀨야'처럼 부르거나 칩으로 골라도 그 AI만 즉답해요. 편하게 지시해 주세요! 🟢`);
     state.msgs.push({
       id: "seed-2", at: nowISO(), who: "pikri", kind: "msg",
       text: lines.join(" "),
@@ -826,6 +980,8 @@
     const mirror = $("#tgMirror");
     if (mirror) mirror.checked = !!state.settings.mirror;
     renderKkyuCard();
+    renderClaudeCard();
+    renderLinkStatus();
     setEnginePill();
     const info = $("#roomHistoryInfo");
     if (info) info.textContent = `저장된 메시지 ${state.msgs.length}개 · 이 브라우저에만 남습니다`;
@@ -836,9 +992,49 @@
     }
   }
 
+  /* ---------------- AI별 연동 상태 ---------------- */
+  const LINK_ROWS = [
+    { key: "pikri", name: "피크리", reach: "가능", via: "텔레그램 방 5분 폴링 + 웹 즉답", note: "방 전송이 켜져 있으면 오더를 직접 집어 간다", cfg: "tg" },
+    { key: "keyring", name: "키링", reach: "가능", via: "텔레그램 방 5분 순찰 + 웹 즉답", note: "피크리와 같은 방을 순찰한다", cfg: "tg" },
+    { key: "kkyu", name: "뀨", reach: "가능", via: "웹훅으로 즉시 기상 + 웹 즉답", note: "order_id · sheet_row · I열 지정까지 보낸다", cfg: "kkyu" },
+    { key: "byeongdu2", name: "병두2", reach: "가능", via: "세컨드 피클 — 같은 방·시트·웹을 공유", note: "리서치·원고·체험단 탐색을 피크리와 나뉘 말는다", cfg: "tg" },
+    { key: "claude", name: "클로드", reach: "가능", via: "Claude API 직접 호출(키 있을 때) + 웹 즉답", note: "키가 없으면 Gemini 기반 클로드 페르소나로 자동 대체된다", cfg: "claude" },
+    { key: "bui", name: "부이", reach: "조건부", via: "텔레그램 방에서 사람이 직접 부르면 반응", note: "자동 수신 API·웹훅이 없어 스스로 깨어나지 못한다. 방으로 오더는 가지만 부이 본체는 수동 호출" , cfg: null },
+    { key: "gemini", name: "제미나이", reach: "웹 전용", via: "Gemini API 직접 호출 (웹 즉답)", note: "설정에 Gemini 키가 있어야 동작", cfg: "gem" },
+  ];
+
+  function linkState(row) {
+    if (row.cfg === "tg") return hasTg() ? { on: true, text: "방 전송 켜짐" } : { on: false, text: "방 미설정" };
+    if (row.cfg === "kkyu") return hasKkyu() ? { on: true, text: "웹훅 설정됨" } : { on: false, text: "웹훅 미설정" };
+    if (row.cfg === "claude") return state.settings.claudeKey ? { on: true, text: "Claude 키 있음" } : { on: false, text: "Gemini 대체" };
+    if (row.cfg === "gem") return state.settings.key ? { on: true, text: "키 있음" } : { on: false, text: "키 없음" };
+    return { on: null, text: "본체 자동호출 없음" };
+  }
+
+  function renderLinkStatus() {
+    const box = $("#linkStatus");
+    if (!box) return;
+    box.innerHTML = LINK_ROWS.map((row) => {
+      const st = linkState(row);
+      const cls = row.reach === "가능" ? "ok" : (row.reach === "조건부" ? "part" : "wait");
+      const dot = st.on === true ? "live" : (st.on === false ? "off" : "none");
+      return `<div class="link-row">
+        <div class="lr-av">${AVATAR[row.key] || AVATAR.pikri}</div>
+        <div class="lr-body">
+          <div class="lr-head">
+            <b>${esc(row.name)}</b>
+            <span class="lr-chip ${cls}">${esc(row.reach)}</span>
+            <span class="lr-cfg ${dot}">${esc(st.text)}</span>
+          </div>
+          <p class="lr-via">${esc(row.via)}</p>
+          <p class="lr-note">${esc(row.note)}</p>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
   function renderKkyuCard() {
-    const urlEl = $("#kkyuWebhook");
-    if (urlEl && document.activeElement !== urlEl) urlEl.value = state.settings.kkyuUrl || "";
+    const urlEl = $("#kkyuWebhook");    if (urlEl && document.activeElement !== urlEl) urlEl.value = state.settings.kkyuUrl || "";
     const secEl = $("#kkyuSecret");
     if (secEl && document.activeElement !== secEl) {
       secEl.value = state.settings.kkyuSecret ? "••••••••••••" : "";
@@ -862,6 +1058,23 @@
   }
 
   function typedKkyuUrl() { return String($("#kkyuWebhook")?.value || "").trim(); }
+  function typedClaudeKey() {
+    const typed = String($("#claudeKey")?.value || "").trim();
+    if (typed && !/^•+$/.test(typed)) return typed;
+    return String(state.settings.claudeKey || "").trim();
+  }
+
+  function renderClaudeCard() {
+    const keyEl = $("#claudeKey");
+    if (keyEl && document.activeElement !== keyEl) {
+      keyEl.value = state.settings.claudeKey ? "••••••••••••" : "";
+      keyEl.placeholder = state.settings.claudeKey ? "저장됨 (바꾸려면 새로 입력)" : "sk-ant-… (비워두면 저장 안 함)";
+    }
+    const keyState = $("#claudeKeyState");
+    if (keyState) keyState.textContent = state.settings.claudeKey ? "저장됨" : "없음";
+    const modelEl = $("#claudeModel");
+    if (modelEl && document.activeElement !== modelEl) modelEl.value = state.settings.claudeModel || DEFAULT_CLAUDE_MODEL;
+  }
   function typedSecret() {
     const typed = String($("#kkyuSecret")?.value || "").trim();
     if (typed && !/^•+$/.test(typed)) return typed;
@@ -1026,17 +1239,72 @@
         return;
       }
       if (res) { res.dataset.sticky = "1"; res.classList.remove("err"); res.textContent = "웹훅 테스트 전송 중…"; }
-      const r = await postWebhook(url, {
-        secret: typedSecret(),
-        source: "ai-hub",
-        summary: "[AI허브 오더] 연결 테스트 — 피크리 → 뀨",
-        targets: ["뀨"],
-        at: nowISO(),
-      });
+      const r = await postWebhook(typedKkyuUrl(), Object.assign(kkyuPayload(
+        "[AI허브 오더] 연결 테스트 — 피크리 → 뀨",
+        nextOrderRef(),
+        { targets: ["뀨"], at: nowISO(), text: "연결 테스트" }
+      ), { secret: typedSecret() }));
       if (!res) return;
       if (r === "ok") { res.classList.remove("err"); res.textContent = "✅ 뀨 웹훅이 응답했습니다. 이제 글을 보내면 텔레그램과 같이 나갑니다."; }
       else if (r === "nc") { res.classList.remove("err"); res.textContent = "📡 전송은 나갔습니다. 웹훅이 응답을 공개하지 않아(CORS) 확인만 불가합니다 — 뀨 쪽에서 받았는지 보세요."; }
       else { res.classList.add("err"); res.textContent = `❌ 웹훅 전송 실패 — ${String(r).replace(/^fail:/, "")}`; }
+    });
+    // 클로드 API
+    $("#saveClaude")?.addEventListener("click", () => {
+      const raw = String($("#claudeKey")?.value || "").trim();
+      if (raw && !/^•+$/.test(raw)) {
+        if (!/^sk-ant-/.test(raw)) { toast("Claude 키는 sk-ant- 로 시작합니다."); return; }
+        if (raw.length < 30) { toast("Claude 키가 너무 짧습니다."); return; }
+        state.settings.claudeKey = raw;
+      }
+      const model = String($("#claudeModel")?.value || "").trim();
+      if (model) state.settings.claudeModel = model;
+      saveSettings();
+      renderSettingsCard();
+      const out = $("#claudeResult");
+      if (out) {
+        out.classList.remove("err");
+        out.textContent = state.settings.claudeKey
+          ? `저장됨 · 클로드 차례는 ${state.settings.claudeModel} 로 답합니다`
+          : "키 없이 저장했습니다 — 클로드는 Gemini 페르소나로 답합니다.";
+      }
+      toast("이 브라우저에만 저장했습니다.");
+    });
+    $("#clearClaude")?.addEventListener("click", () => {
+      state.settings.claudeKey = "";
+      saveSettings();
+      const keyEl = $("#claudeKey"); if (keyEl) keyEl.value = "";
+      renderSettingsCard();
+      const out = $("#claudeResult"); if (out) out.textContent = "Claude 키를 지웠습니다 — 클로드는 Gemini 페르소나로 답합니다.";
+      toast("Claude 키를 지웠습니다.");
+    });
+    $("#testClaude")?.addEventListener("click", async () => {
+      const out = $("#claudeResult");
+      const key = typedClaudeKey();
+      const model = String($("#claudeModel")?.value || state.settings.claudeModel || DEFAULT_CLAUDE_MODEL).trim();
+      if (!key) {
+        if (out) { out.textContent = "Claude 키를 먼저 넣어 주세요. 키가 없으면 Gemini 페르소나로 답합니다."; }
+        return;
+      }
+      if (out) { out.classList.remove("err"); out.textContent = `'${model}' 호출 중…`; }
+      const t0 = performance.now();
+      try {
+        const text = await streamClaude({
+          key,
+          payload: {
+            model,
+            max_tokens: 64,
+            system: "너는 연결 확인용 응답기다. 한국어 한 문장으로만 답한다.",
+            messages: [{ role: "user", content: "연결 확인. 준비됐다고 한 문장으로 답해줘." }],
+            stream: true,
+          },
+          onDelta: () => {},
+        });
+        const ms = Math.round(performance.now() - t0);
+        if (out) out.textContent = `✅ Claude 연결됨 · ${model} · ${ms}ms · "${text.slice(0, 60)}"`;
+      } catch (e) {
+        if (out) { out.classList.add("err"); out.textContent = `❌ ${(e && e.message) || e}`; }
+      }
     });
     $("#roomReset")?.addEventListener("click", () => {
       if (!window.confirm("이 기기의 단톡방 기록을 모두 지울까요? (오더보드·시트는 그대로입니다)")) return;

@@ -86,7 +86,7 @@
             <span class="room-ico" aria-hidden="true">💬</span>
             <div class="room-tt">
               <strong>AI 단톡방</strong>
-              <span id="roomSub">피크리 · 부이 · 키링 · 뀨 · 제미나이 · 클로드 · 방장</span>
+              <span id="roomSub">피크리 · 병두2 · 부이 · 키링 · 뀨 · 제미나이 · 클로드 · 방장</span>
             </div>
           </div>
           <div class="room-tools">
@@ -103,6 +103,7 @@
           <div class="chips mini" id="chipsMini" role="radiogroup" aria-label="대상 선택">
             <button class="chip-target" type="button" data-target="모두에게" role="radio" aria-checked="true"><span class="ct-ico">📣</span>모두에게</button>
             <button class="chip-target" type="button" data-target="피크리" role="radio" aria-checked="false"><span class="ct-av" data-av="pikri"></span>피크리</button>
+            <button class="chip-target" type="button" data-target="병두2" role="radio" aria-checked="false"><span class="ct-av" data-av="byeongdu2"></span>병두2</button>
             <button class="chip-target" type="button" data-target="부이" role="radio" aria-checked="false"><span class="ct-av" data-av="bui"></span>부이</button>
             <button class="chip-target" type="button" data-target="키링" role="radio" aria-checked="false"><span class="ct-av" data-av="keyring"></span>키링</button>
             <button class="chip-target" type="button" data-target="뀨" role="radio" aria-checked="false"><span class="ct-av" data-av="kkyu"></span>뀨</button>
@@ -114,7 +115,7 @@
             <button class="send-btn" id="roomSend" type="button" aria-label="보내기">전송</button>
           </div>
           <div class="composer-foot">
-            <span class="fine" id="sendHint">설정에서 Gemini 키를 넣으면 6명이 바로 답합니다</span>
+            <span class="fine" id="sendHint">설정에서 Gemini 키를 넣으면 7명이 바로 답합니다</span>
           </div>
         </form>
       </div>
@@ -210,6 +211,36 @@
           <p class="fine" id="geminiResult">기본값: 하이드로젠(gemini-4-hydrogen). 아르곤은 유료 등급 키에서 동작합니다.</p>
         </div>
 
+        <!-- Claude API -->
+        <div class="card block" id="claudeCard">
+          <h3 class="card-h">클로드 API 연동 (선택) <span class="tag-local">이 브라우저에만 저장</span></h3>
+          <p class="fine">
+            Anthropic 키를 넣으면 단톡방의 <b>클로드 차례</b>에 진짜 Claude가 답합니다(브라우저 직접 호출).
+            키가 비어 있으면 지금처럼 Gemini 기반 클로드 페르소나가 대신 답합니다.
+            키는 이 브라우저 <code>localStorage</code>에만 남습니다.
+          </p>
+          <label class="field">
+            <span>Claude API 키 (Anthropic) <b class="state" id="claudeKeyState">없음</b></span>
+            <input id="claudeKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-… (비워두면 저장 안 함)" />
+          </label>
+          <label class="field">
+            <span>모델</span>
+            <input id="claudeModel" type="text" list="claudeModelList" autocomplete="off" spellcheck="false" placeholder="claude-3-5-sonnet-latest" />
+            <datalist id="claudeModelList">
+              <option value="claude-3-5-sonnet-latest"></option>
+              <option value="claude-3-5-haiku-latest"></option>
+              <option value="claude-sonnet-4-5"></option>
+              <option value="claude-haiku-4-5"></option>
+            </datalist>
+          </label>
+          <div class="row-actions">
+            <button class="ghost-btn primary" id="saveClaude" type="button">저장</button>
+            <button class="ghost-btn" id="testClaude" type="button">클로드 연결 테스트</button>
+            <button class="ghost-btn" id="clearClaude" type="button">키 지우기</button>
+          </div>
+          <p class="fine" id="claudeResult">키가 없으면 클로드는 Gemini 페르소나로 답합니다(비용은 Gemini 쪽으로).</p>
+        </div>
+
         <!-- 텔레그램 미러 -->
         <div class="card block">
           <h3 class="card-h">텔레그램 연동 (선택) <span class="tag-local">이 브라우저에만 저장</span></h3>
@@ -264,6 +295,19 @@
           <p class="fine" id="kkyuResult">봇 토큰·방 ID 또는 웹훅 URL 중 하나만 있어도 위 스위치는 켜집니다.</p>
         </div>
 
+        <!-- AI별 연동 상태 -->
+        <div class="card block" id="linkStatusCard">
+          <h3 class="card-h">AI별 연동 상태 <span class="tag-local">실제 도달 경로</span></h3>
+          <p class="fine">
+            웹에서 부른 AI가 <b>실제 본체까지</b> 닿는지 정리한 표입니다. 아래 상태 배지는 지금 이 브라우저의 설정을 반영합니다.
+          </p>
+          <div class="link-table" id="linkStatus"></div>
+          <p class="fine">
+            오더를 보내면 뀨 웹훅에는 <code>order_id</code>·<code>sheet_row</code>·<code>write_column: "I"</code>가 함께 나갑니다.
+            시트 행 번호는 스냅샷의 마지막 오더 번호 + 1로 계산한 <b>예상값</b>이고, 실제 행은 텔레그램을 받은 피크리·키링(5분 폴링)이 같은 규칙으로 만듭니다.
+          </p>
+        </div>
+
         <!-- 대화 기록 -->
         <div class="card block">
           <h3 class="card-h">대화 기록</h3>
@@ -293,6 +337,7 @@
             <li>API 키는 브라우저에서만 쓰이고, 화면·로그·저장 파일에 평문으로 남기지 않는다</li>
             <li>텔레그램 미러는 켤 때만 전송한다 (기본 꺼짐)</li>
             <li>뀨 웹훅 URL·Secret도 브라우저 <code>localStorage</code>에만 둔다 — 화면과 저장소에는 마스킹해서 보여준다</li>
+            <li>부이·클로드는 본체 자동 호출 경로가 없다 — 웹 페르소나 혹은 방에서 사람이 부르는 방식으로만 반응한다</li>
           </ul>
         </div>
 

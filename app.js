@@ -12,18 +12,20 @@
 
   const AI = {
     pikri:   { name: "피크리", badge: "총괄 비서", badgeClass: "owner", role: "총괄 · 검수 · 오더 집행", state: "상시" },
+    byeongdu2: { name: "병두2", badge: "세컨드 피클 · 분산담당", badgeClass: "second", role: "리서치 · 원고 · 체험단 탐색", state: "분산" },
     bui:     { name: "부이",   badge: "AI",       badgeClass: "",      role: "원고 · 카피 · 톤",       state: "호출 시" },
     keyring: { name: "키링",   badge: "AI",       badgeClass: "",      role: "인프라 · 5분 폴링",      state: "5분 주기" },
     kkyu:    { name: "뀨",     badge: "AI",       badgeClass: "",      role: "오더보드 감시 · 팩트체크", state: "웹훅" },
     gemini:  { name: "제미나이", badge: "제미나이 AI", badgeClass: "",    role: "구글 검색 · 데이터 분석", state: "호출 시" },
     claude:  { name: "클로드",   badge: "클로드 AI",   badgeClass: "",    role: "논리 검증 · 카피라이팅", state: "호출 시" },
   };
-  const NAME2KEY = { 피크리: "pikri", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
+  const NAME2KEY = { 피크리: "pikri", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
   const CHANNEL_LABEL = { telegram: "텔레그램", sheet: "시트", kkyu: "뀨" };
 
   /* ---------------- 아바타 ---------------- */
   const AVATAR = {
     pikri: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#2eb872"/><circle cx="30" cy="10" r="4.6" fill="#ffcf3f"/><text x="20" y="27.5" font-size="21" font-weight="800" text-anchor="middle" fill="#ffffff" font-family="sans-serif">ㅍ</text></svg>`,
+    byeongdu2: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e5edff"/><circle cx="15.5" cy="21" r="7.6" fill="none" stroke="#4f74e0" stroke-width="4"/><circle cx="26.5" cy="24.5" r="5.4" fill="none" stroke="#7f9bea" stroke-width="3.4"/><circle cx="29.5" cy="10.5" r="3.6" fill="#ffcf3f"/></svg>`,
     bui: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#f2f0ff"/><circle cx="20" cy="20" r="13" fill="none" stroke="#7a6cf0" stroke-width="7.5"/><circle cx="20" cy="20" r="13" fill="none" stroke="#42a5ff" stroke-width="7.5" stroke-dasharray="10.2 10.2" stroke-dashoffset="5.1"/><circle cx="20" cy="20" r="4.6" fill="#ffffff"/></svg>`,
     keyring: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#ffd83d"/><path d="M23.2 6.5 12.4 21.6h6.2l-2 11.9 11-15.4h-6.3z" fill="#7a4b00"/></svg>`,
     kkyu: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e8f1ff"/><path d="M14 10.5 29.5 20 14 29.5z" fill="#2f7bf6" stroke="#2f7bf6" stroke-width="3" stroke-linejoin="round"/></svg>`,
@@ -83,7 +85,7 @@
 
   /* ---------------- 렌더: 상단 ---------------- */
   function renderProfiles() {
-    const order = ["pikri", "bui", "keyring", "kkyu", "gemini", "claude"];
+    const order = ["pikri", "byeongdu2", "bui", "keyring", "kkyu", "gemini", "claude"];
     $("#profiles").innerHTML = order.map((k) => {
       const p = AI[k];
       return `<div class="profile ${k}" title="${esc(p.role)} · ${esc(p.state)}">
@@ -113,7 +115,7 @@
     }
     $("#brandSub").textContent = state.mode === "server"
       ? "AI들이 일을 이어가고 있어요"
-      : "6명 AI가 실시간으로 답합니다";
+      : "7명 AI가 실시간으로 답합니다";
   }
 
   /* ---------------- 오더보드 ---------------- */
@@ -360,9 +362,33 @@
         }
       } catch (_) { /* 이전 값 유지 */ }
     } else {
+      // 정적 PWA: 배포된 암호화 스냅샷을 다시 받아 지금 키로 풀어 본다
+      if (force && window.AIHUB_STATIC) {
+        const fresh = await refetchSnapshot().catch(() => false);
+        if (fresh) toast("새 스냅샷을 받았습니다.");
+        else toast("새 스냅샷이 없거나 열쇠가 없습니다 — 저장본으로 보여줍니다.");
+      }
       useSnapshot();
     }
     renderAll();
+  }
+
+  /** 배포된 snapshot.enc.json 을 다시 받아 이 브라우저에 저장된 열쇠로 복호화한다. */
+  async function refetchSnapshot() {
+    const keyB64 = localStorage.getItem("aihub.pwa.key");
+    if (!keyB64) return false;
+    const res = await fetch("data/snapshot.enc.json", { cache: "no-store" });
+    if (!res.ok) return false;
+    const enc = await res.json();
+    if (!enc || !enc.iv || !enc.ct) return false;
+    const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey("raw", b64(keyB64), "AES-GCM", true, ["decrypt"]);
+    const plain = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: b64(enc.iv), additionalData: new TextEncoder().encode(enc.aad || "aihub-v1") },
+      key, b64(enc.ct)
+    );
+    window.AIHUB_SNAPSHOT = JSON.parse(new TextDecoder().decode(plain));
+    return true;
   }
 
   function renderAll() {
@@ -394,7 +420,7 @@
     $("#refreshBtn").addEventListener("click", async () => {
       toast("오더보드를 다시 불러오는 중…");
       await refreshBoard(true);
-      toast(state.board.source === "google_sheet" ? "시트에서 새로 읽었습니다." : "스냅샷 기준입니다 — 새 내용은 사이트를 새로 열 때 반영됩니다.");
+      toast(state.board.source === "google_sheet" ? "시트에서 새로 읽었습니다." : "배포된 스냅샷 기준입니다 — 시트의 새 내용은 스냅샷 재배포 때 반영됩니다.");
     });
 
     $$("#boardFilters .filter").forEach((b) => b.addEventListener("click", () => {

@@ -50,7 +50,7 @@ styles.css          디자인
 lock.js             PIN → 스냅샷 복호화 → app.js · room.js 로드
 app.js              오더보드 · 토론로그 · 설정
 room.js             실시간 단톡방 엔진 (Gemini 스트리밍 · 텔레그램/뀨 오더 릴레이)
-sw.js               서비스워커 (캐시 aihub-pwa-v20, 네트워크 우선)
+sw.js               서비스워커 (캐시 aihub-pwa-v21, 네트워크 우선)
 preview.html        데스크톱에서 375px 폰 화면으로 보기
 manifest.json       PWA 설정 (standalone, #2563eb)
 icons/              192 · 512 · maskable 아이콘
@@ -60,5 +60,5 @@ data/snapshot.enc.json  암호화된 오더보드 스냅샷
 
 ## 새 버전 받기
 
-`sw.js`의 캐시 이름(`aihub-pwa-v20`)을 올려 배포하면, 폰에서 앱을 다시 열 때 새 껍데기를 받습니다.
+`sw.js`의 캐시 이름(`aihub-pwa-v21`)을 올려 배포하면, 폰에서 앱을 다시 열 때 새 껍데기를 받습니다.
 그래도 예전 화면이 보이면 브라우저에서 사이트를 새로고침하거나 앱을 지웠다 다시 추가하면 됩니다.
