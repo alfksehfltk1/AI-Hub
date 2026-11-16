@@ -113,6 +113,11 @@
   const ROUND = ["bui", "keyring", "kkyu", "claude", "muse", "byeongdu2", "dola", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
   const NAME2KEY = { 피크리: "pikri", 도라: "dola", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 클로드: "claude", 뮤즈: "muse" };
 
+  // 이전 체제에서 남은 대화 기록(제미나이)은 이름만 살려서 보여준다 — 멤버 목록에는 들어가지 않는다
+  const LEGACY_AI = { gemini: { name: "제미나이", badge: "이전 멤버", cls: "" } };
+  const aiOf = (k) => AI[k] || LEGACY_AI[k] || AI.pikri;
+  const avOf = (k) => AVATAR[k] || AVATAR.me;
+
   const RULES = [
     "[대화 규칙]",
     "- 사용자는 '@방장'이라고 부른다. 실명은 쓰지 않는다.",
@@ -239,11 +244,23 @@
     return nowISO().replace("T", " ").slice(0, 16);
   }
 
-  function orderText(text, targets) {
+  // 부이 본체는 15분 폴링에서 '@모두'를 읽지 못하고 '@vooy_doo_bot' 또는 '부이'가 있어야 깨어난다
+  const VOOY_HANDLE = "@vooy_doo_bot";
+
+  /** 오더 머리말. opts.telegraph 가 참이고 대상이 모두에게/부이면 부이를 깨우는 핸들을 붙인다. */
+  function orderHead(targets, telegraph) {
     const named = (targets || []).filter((t) => t && t !== "모두에게");
-    const head = named.length ? `@${named.join(" @")}` : "@모두";
+    let head = named.length ? `@${named.join(" @")}` : "@모두";
+    if (telegraph && (!named.length || named.includes("부이"))) {
+      head += named.length ? ` ${VOOY_HANDLE}` : ` ${VOOY_HANDLE} 부이`;
+    }
+    return head;
+  }
+
+  function orderText(text, targets, opts) {
+    const named = (targets || []).filter((t) => t && t !== "모두에게");
     return [
-      `[AI허브 오더] ${head}`,
+      `[AI허브 오더] ${orderHead(targets, !!(opts && opts.telegraph))}`,
       String(text || "").trim(),
       "",
       `— AI 허브 · ${orderStamp()} · 대상 ${named.length ? named.join(" · ") : "모두에게"}`,
@@ -355,10 +372,11 @@
     if (!relayEnabled() || (!hasTg() && !hasKkyu())) return;
     m.relay = { pending: true };
     paintRelay(m);
-    const summary = orderText(text, targets);
+    const summary = orderText(text, targets);                     // 뀨 웹훅·기록용(핸들 없음)
+    const tgText = orderText(text, targets, { telegraph: true });  // 텔레그램용 — 부이 폴링 깨우기 핸들 포함
     const ref = nextOrderRef();
     const [tg, kkyu] = await Promise.all([
-      sendTelegramOrder(summary),
+      sendTelegramOrder(tgText),
       postKkyu(kkyuPayload(summary, ref, { text: String(text || ""), targets: targets || [], at: nowISO() })),
     ]);
     const norm = (v) => (v === "ok" || v === "nc" || v === "skip" ? v : "fail");
@@ -417,7 +435,7 @@
   function transcript(limit) {
     const rows = state.msgs.filter((m) => m.kind !== "sys" && m.text).slice(-limit);
     return rows.map((m) => {
-      const who = m.who === "me" ? "방장" : (AI[m.who] ? AI[m.who].name : m.who);
+      const who = m.who === "me" ? "방장" : (aiOf(m.who).name || m.who);
       return `${who}: ${String(m.text).replace(/\s+/g, " ").slice(0, 300)}`;
     }).join("\n");
   }
@@ -670,9 +688,9 @@
       </div>`;
     }
     if (m.kind === "err") {
-      const ai = AI[m.who];
+      const ai = AI[m.who] || LEGACY_AI[m.who];
       return `<div class="bmsg ai err" ${at}>
-        <div class="bav">${AVATAR[m.who] || AVATAR.pikri}</div>
+        <div class="bav">${avOf(m.who)}</div>
         <div class="bbody">
           <div class="bhead"><span class="bname">${ai ? ai.name : "시스템"}</span><span class="bbadge warn">오류</span></div>
           <div class="bbub errtxt">${esc(m.text)}</div>
@@ -680,7 +698,7 @@
         </div>
       </div>`;
     }
-    const ai = AI[m.who] || AI.pikri;
+    const ai = aiOf(m.who);
     const call = m.call === "loud"
       ? `<div class="bcall">🔔 ${esc(ai.name)} · ${esc(ai.role)} · 호출됨</div>`
       : m.call === "broadcast"
@@ -690,7 +708,7 @@
     const cls = ["bmsg", "ai", m.who];
     if (m.call === "loud" || m.call === "broadcast") cls.push("called");
     return `<div class="${cls.join(" ")}" ${at}>
-      <div class="bav">${AVATAR[m.who] || AVATAR.pikri}</div>
+      <div class="bav">${avOf(m.who)}</div>
       <div class="bbody">
         <div class="bhead"><span class="bname">${esc(ai.name)}</span><span class="bbadge ${ai.cls}">${esc(ai.badge)}</span>${m.streaming ? '<span class="thin-dots"><i></i><i></i><i></i></span>' : ""}</div>
         ${call}
