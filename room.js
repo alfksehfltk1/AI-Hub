@@ -994,7 +994,10 @@
         res.dataset.sticky = "1";
         res.classList.remove("err");
         res.textContent = state.settings.kkyuUrl
-          ? `저장됨 · ${(hasKkyu() ? "뀨 웹훅" : "")}${hasKkyu() && hasTg() ? " + " : ""}${hasTg() ? "텔레그램 방" : ""}${relayEnabled() ? " 으로 동시 전송 중" : " (전송 꺼짐)"}`
+          ? (() => {
+              const to = [hasKkyu() ? "뀨 웹훅" : "", hasTg() ? "텔레그램 방" : ""].filter(Boolean).join(" + ");
+              return `저장됨 · 대상 ${to} · ${relayEnabled() ? "메시지 전송 때 같이 김니다" : "지금은 전송 꺼짐"}`;
+            })()
           : "웹훅 URL 이 비어 있습니다. 텔레그램만으로도 오더는 나갑니다.";
       }
       toast("이 브라우저에만 저장했습니다.");
