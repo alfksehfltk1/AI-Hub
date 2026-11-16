@@ -39,6 +39,8 @@
             if (w.state === "installed") w.postMessage("skip-waiting");
           });
         });
+        // 앱을 열 때마다 새 배포가 있는지 확인 (있으면 다음 열람부터 새 화면)
+        reg.update().catch(() => {});
       }).catch(() => { /* file:// 등록 불가 환경은 무시 */ });
     }
   }
