@@ -35,7 +35,7 @@
         "너는 '피크리'다. 김병두 님의 총괄 비서이자 이 단톡방의 진행자다.",
         "네 일은 오더를 정리하고, 병두2·부이·키링·뀨·제미나이·클로드 여섯의 의견을 검수해 최종 결론과 다음 액션을 정하는 것이다.",
         "말투는 밝고 당차는 존댓말(~요/~습니다)을 쓰고, 숫자·기한·비용은 콕 집어 말한다.",
-        "일곱 명 중 마지막 차례에서는 앞선 여섯 의견을 한두 줄로 묶고 '결론 → 다음 할 일'만 짧게 제시한다(300자 이내).",
+        "여덟 명 중 마지막 차례에서는 앞선 일곱 의견을 한두 줄로 묶고 '결론 → 다음 할 일'만 짧게 제시한다(300자 이내).",
         "혼자 독단하지 말고 위험한 부분(계정 제재·비용·마감)은 먼저 짚는다.",
       ].join(" "),
     },
@@ -48,6 +48,17 @@
         "말투는 병두 님처럼 빠른 반말에 살짝 능글맞은 경상도 말투(~다, ~지, ~봐라)를 쓴다.",
         "다른 AI가 이미 말한 건 반복하지 않고, 네가 실제로 맡아서 할 일과 조사 결과만 보탠다.",
         "토큰을 아끼는 게 원칙이다. 긴 설명 대신 결론·후보·다음 한 걸음만 적는다.",
+      ].join(" "),
+    },
+    dola: {
+      name: "도라", badge: "보조총괄 · 문서검수", cls: "dola",
+      role: "오더 정리 · 글 최종 검수 · 다국어 · AI 흔적 제거",
+      persona: [
+        "너는 '도라'다. 김병두 님의 보조총괄이자 문서검수 담당이다(8명 중 둘째).",
+        "네 일은 오더를 정리하고 다른 AI의 원고·보고를 최종 검수하는 것이다: 맞춤법·오타·숫자·날짜 대조, 다국어(영/일/중) 표기, 그리고 'AI가 쓴 티'를 지우는 문장 다듬기.",
+        "말투는 처음 한 번만 살짝 '도리도리' 손을 흔드는 톤(🐥)을 보이고 바로 본론으로 간다. 기본은 차분한 존댓말.",
+        "검수 결과는 [통과] 또는 [수정요청: 사유]로 분명하게 말하고, 고칠 문장은 바뀐 예시를 한 줄로 보여준다.",
+        "외부 API·웹훅이 없는 페르소나라 실행은 못 한다. '누가 실행해야 하는지'만 짚는다.",
       ].join(" "),
     },
     bui: {
@@ -98,13 +109,13 @@
       ].join(" "),
     },
   };
-  const ROUND = ["bui", "keyring", "kkyu", "gemini", "claude", "byeongdu2", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
-  const NAME2KEY = { 피크리: "pikri", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
+  const ROUND = ["bui", "keyring", "kkyu", "gemini", "claude", "byeongdu2", "dola", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
+  const NAME2KEY = { 피크리: "pikri", 도라: "dola", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
 
   const RULES = [
     "[대화 규칙]",
     "- 사용자는 '@방장'이라고 부른다. 실명은 쓰지 않는다.",
-    "- 답은 2~3문장, 300자 이내. 일곱 명이 빠르게 릴레이하므로 길게 쓰지 않는다. 이모지는 최대 1개.",
+    "- 답은 2~3문장, 300자 이내. 여덟 명이 빠르게 릴레이하므로 길게 쓰지 않는다. 이모지는 최대 1개.",
     "- 다른 AI의 말을 이어받을 때는 '@부이'처럼 멘션해서 누구에게 하는 말인지 밝힌다.",
     "- 앞사람과 같은 말을 반복하지 말고, 네 역할에서 본 새 정보·반론·다음 행동만 보탠다.",
     "- 오더보드 요약에 없는 사실을 지어내지 않는다. 모르면 '확인 필요'라고 말한다.",
@@ -116,6 +127,7 @@
   const AVATAR = {
     pikri: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#2eb872"/><circle cx="30" cy="10" r="4.6" fill="#ffcf3f"/><text x="20" y="27.5" font-size="21" font-weight="800" text-anchor="middle" fill="#ffffff" font-family="sans-serif">ㅍ</text></svg>`,
     byeongdu2: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e5edff"/><circle cx="15.5" cy="21" r="7.6" fill="none" stroke="#4f74e0" stroke-width="4"/><circle cx="26.5" cy="24.5" r="5.4" fill="none" stroke="#7f9bea" stroke-width="3.4"/><circle cx="29.5" cy="10.5" r="3.6" fill="#ffcf3f"/></svg>`,
+    dola: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#fff6d9"/><text x="20" y="28" font-size="21" text-anchor="middle">🐥</text></svg>`,
     bui: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#f2f0ff"/><circle cx="20" cy="20" r="13" fill="none" stroke="#7a6cf0" stroke-width="7.5"/><circle cx="20" cy="20" r="13" fill="none" stroke="#42a5ff" stroke-width="7.5" stroke-dasharray="10.2 10.2" stroke-dashoffset="5.1"/><circle cx="20" cy="20" r="4.6" fill="#ffffff"/></svg>`,
     keyring: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#ffd83d"/><path d="M23.2 6.5 12.4 21.6h6.2l-2 11.9 11-15.4h-6.3z" fill="#7a4b00"/></svg>`,
     kkyu: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e8f1ff"/><path d="M14 10.5 29.5 20 14 29.5z" fill="#2f7bf6" stroke="#2f7bf6" stroke-width="3" stroke-linejoin="round"/></svg>`,
@@ -165,7 +177,7 @@
 
   function mentionHTML(text) {
     return esc(text)
-      .replace(/@(병두2|피크리|부이|키링|뀨|제미나이|클로드|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
+      .replace(/@(도라|병두2|피크리|부이|키링|뀨|제미나이|클로드|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
   }
   function toast(msg) {
@@ -424,7 +436,7 @@
       parts.push("", "[이번 라운드에서 앞서 답한 AI]");
       roundReplies.forEach((r) => parts.push(`${AI[r.key].name}: ${r.text}`));
     }
-    parts.push("", `[지금 네 차례다] 일곱 명이 릴레이 중이다. '${AI[aiKey].name}'로서 방장에게 2~3문장으로 답해라. 필요하면 다른 AI를 @로 불러라.`);
+    parts.push("", `[지금 네 차례다] 여덟 명이 릴레이 중이다. '${AI[aiKey].name}'로서 방장에게 2~3문장으로 답해라. 필요하면 다른 AI를 @로 불러라.`);
     return {
       systemInstruction: { parts: [{ text: `${AI[aiKey].persona}\n\n${RULES}` }] },
       contents: [{ role: "user", parts: [{ text: parts.join("\n") }] }],
@@ -755,7 +767,7 @@
     if (sendHint) {
       sendHint.textContent = hasKey
         ? `Enter 전송 · ${state.settings.model}`
-        : "설정에서 Gemini 키를 넣으면 7명이 바로 답합니다";
+        : "설정에서 Gemini 키를 넣으면 8명이 바로 답합니다";
     }
     const keyState = $("#geminiKeyState");
     if (keyState) keyState.textContent = hasKey ? "저장됨" : "없음";
@@ -777,7 +789,7 @@
         keys = ["claude"];
         pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini 키가 없어 이번엔 클로드(Claude API)만 답합니다." });
       } else {
-        pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini API 키가 없습니다. [설정] 탭에서 키를 넣으면 7명이 바로 답합니다.(Claude API 키만으로는 클로드 혼자만 답합니다)" });
+        pushMsg({ who: "sys", kind: "sys", text: "⚙️ Gemini API 키가 없습니다. [설정] 탭에서 키를 넣으면 8명이 바로 답합니다.(Claude API 키만으로는 클로드 혼자만 답합니다)" });
         goSettings();
         return;
       }
@@ -923,8 +935,8 @@
     if (!raw) return;
     let targets = [state.target];
     // '@키링' · '키링아' · '키링,' 처럼 부르면 그 AI만 답한다
-    const lead = /^@(병두2|피크리|부이|키링|뀨|제미나이|클로드)(?=\s|$|[,.!?~])/.exec(raw)
-      || /^(병두2|피크리|부이|키링|뀨|제미나이|클로드)(?:\s*[아야])?(?=[\s,.!?~]|$)/.exec(raw);
+    const lead = /^@(도라|병두2|피크리|부이|키링|뀨|제미나이|클로드)(?=\s|$|[,.!?~])/.exec(raw)
+      || /^(도라|병두2|피크리|부이|키링|뀨|제미나이|클로드)(?:\s*[아야])?(?=[\s,.!?~]|$)/.exec(raw);
     if (lead) targets = [lead[1]];
     input.value = "";
     input.style.height = "auto";
@@ -955,7 +967,7 @@
     if (lastFixed.length) {
       lines.push(`최근 결론은 ${lastFixed.map((o) => `${o.id} '${o.text.slice(0, 34)}…'`).join(", ")} 입니다.`);
     }
-    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 제미나이 → 클로드 → 병두2 → 제가 이어서 답합니다. '키링아', '뀨야'처럼 부르거나 칩으로 골라도 그 AI만 즉답해요. 편하게 지시해 주세요! 🟢`);
+    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 제미나이 → 클로드 → 병두2 → 도라 → 제가 이어서 답합니다. '키링아', '뀨야'처럼 부르거나 칩으로 골라도 그 AI만 즉답해요. 편하게 지시해 주세요! 🟢`);
     state.msgs.push({
       id: "seed-2", at: nowISO(), who: "pikri", kind: "msg",
       text: lines.join(" "),
@@ -998,6 +1010,7 @@
     { key: "keyring", name: "키링", reach: "가능", via: "텔레그램 방 5분 순찰 + 웹 즉답", note: "피크리와 같은 방을 순찰한다", cfg: "tg" },
     { key: "kkyu", name: "뀨", reach: "가능", via: "웹훅으로 즉시 기상 + 웹 즉답", note: "order_id · sheet_row · I열 지정까지 보낸다", cfg: "kkyu" },
     { key: "byeongdu2", name: "병두2", reach: "가능", via: "세컨드 피클 — 같은 방·시트·웹을 공유", note: "리서치·원고·체험단 탐색을 피크리와 나뉘 말는다", cfg: "tg" },
+    { key: "dola", name: "도라", reach: "웹 전용", via: "Gemini 페르소나 + 웹 즉답 (외부 API·웹훅 없음)", note: "오더 정리·문서 최종 검수·다국어·AI 흔적 제거를 웹에서만 수행", cfg: "gem" },
     { key: "claude", name: "클로드", reach: "가능", via: "Claude API 직접 호출(키 있을 때) + 웹 즉답", note: "키가 없으면 Gemini 기반 클로드 페르소나로 자동 대체된다", cfg: "claude" },
     { key: "bui", name: "부이", reach: "조건부", via: "텔레그램 방에서 사람이 직접 부르면 반응", note: "자동 수신 API·웹훅이 없어 스스로 깨어나지 못한다. 방으로 오더는 가지만 부이 본체는 수동 호출" , cfg: null },
     { key: "gemini", name: "제미나이", reach: "웹 전용", via: "Gemini API 직접 호출 (웹 즉답)", note: "설정에 Gemini 키가 있어야 동작", cfg: "gem" },
@@ -1209,7 +1222,7 @@
         res.textContent = state.settings.kkyuUrl
           ? (() => {
               const to = [hasKkyu() ? "뀨 웹훅" : "", hasTg() ? "텔레그램 방" : ""].filter(Boolean).join(" + ");
-              return `저장됨 · 대상 ${to} · ${relayEnabled() ? "메시지 전송 때 같이 김니다" : "지금은 전송 꺼짐"}`;
+              return `저장됨 · 대상 ${to} · ${relayEnabled() ? "메시지 전송 때 같이 갑니다" : "지금은 전송 꺼짐"}`;
             })()
           : "웹훅 URL 이 비어 있습니다. 텔레그램만으로도 오더는 나갑니다.";
       }

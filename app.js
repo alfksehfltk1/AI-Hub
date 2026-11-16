@@ -12,6 +12,7 @@
 
   const AI = {
     pikri:   { name: "피크리", badge: "총괄 비서", badgeClass: "owner", role: "총괄 · 검수 · 오더 집행", state: "상시" },
+    dola:    { name: "도라", badge: "보조총괄 · 문서검수", badgeClass: "dola", role: "오더 정리 · 문서검수", state: "호출 시" },
     byeongdu2: { name: "병두2", badge: "세컨드 피클 · 분산담당", badgeClass: "second", role: "리서치 · 원고 · 체험단 탐색", state: "분산" },
     bui:     { name: "부이",   badge: "AI",       badgeClass: "",      role: "원고 · 카피 · 톤",       state: "호출 시" },
     keyring: { name: "키링",   badge: "AI",       badgeClass: "",      role: "인프라 · 5분 폴링",      state: "5분 주기" },
@@ -19,13 +20,14 @@
     gemini:  { name: "제미나이", badge: "제미나이 AI", badgeClass: "",    role: "구글 검색 · 데이터 분석", state: "호출 시" },
     claude:  { name: "클로드",   badge: "클로드 AI",   badgeClass: "",    role: "논리 검증 · 카피라이팅", state: "호출 시" },
   };
-  const NAME2KEY = { 피크리: "pikri", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
+  const NAME2KEY = { 피크리: "pikri", 도라: "dola", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
   const CHANNEL_LABEL = { telegram: "텔레그램", sheet: "시트", kkyu: "뀨" };
 
   /* ---------------- 아바타 ---------------- */
   const AVATAR = {
     pikri: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#2eb872"/><circle cx="30" cy="10" r="4.6" fill="#ffcf3f"/><text x="20" y="27.5" font-size="21" font-weight="800" text-anchor="middle" fill="#ffffff" font-family="sans-serif">ㅍ</text></svg>`,
     byeongdu2: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e5edff"/><circle cx="15.5" cy="21" r="7.6" fill="none" stroke="#4f74e0" stroke-width="4"/><circle cx="26.5" cy="24.5" r="5.4" fill="none" stroke="#7f9bea" stroke-width="3.4"/><circle cx="29.5" cy="10.5" r="3.6" fill="#ffcf3f"/></svg>`,
+    dola: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#fff6d9"/><text x="20" y="28" font-size="21" text-anchor="middle">🐥</text></svg>`,
     bui: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#f2f0ff"/><circle cx="20" cy="20" r="13" fill="none" stroke="#7a6cf0" stroke-width="7.5"/><circle cx="20" cy="20" r="13" fill="none" stroke="#42a5ff" stroke-width="7.5" stroke-dasharray="10.2 10.2" stroke-dashoffset="5.1"/><circle cx="20" cy="20" r="4.6" fill="#ffffff"/></svg>`,
     keyring: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#ffd83d"/><path d="M23.2 6.5 12.4 21.6h6.2l-2 11.9 11-15.4h-6.3z" fill="#7a4b00"/></svg>`,
     kkyu: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e8f1ff"/><path d="M14 10.5 29.5 20 14 29.5z" fill="#2f7bf6" stroke="#2f7bf6" stroke-width="3" stroke-linejoin="round"/></svg>`,
@@ -85,7 +87,7 @@
 
   /* ---------------- 렌더: 상단 ---------------- */
   function renderProfiles() {
-    const order = ["pikri", "byeongdu2", "bui", "keyring", "kkyu", "gemini", "claude"];
+    const order = ["pikri", "dola", "byeongdu2", "bui", "keyring", "kkyu", "gemini", "claude"];
     $("#profiles").innerHTML = order.map((k) => {
       const p = AI[k];
       return `<div class="profile ${k}" title="${esc(p.role)} · ${esc(p.state)}">
@@ -115,7 +117,7 @@
     }
     $("#brandSub").textContent = state.mode === "server"
       ? "AI들이 일을 이어가고 있어요"
-      : "7명 AI가 실시간으로 답합니다";
+      : "8명 AI가 실시간으로 답합니다";
   }
 
   /* ---------------- 오더보드 ---------------- */

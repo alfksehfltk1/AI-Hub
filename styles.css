@@ -649,6 +649,7 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 .lr-via{margin:3px 0 0;font-size:11px;font-weight:700;color:#3c4a5c;line-height:1.45}
 .lr-note{margin:2px 0 0;font-size:10px;color:#93a2b6;line-height:1.5}
 .bbadge.second{background:#e8efff;color:#2f5fd0;border-color:#d5e0ff}
+.bbadge.dola{background:#fff6d9;color:#8a6a12;border-color:#ffe9a8}
 .field input[list]{background:#f8fafd}
 #geminiCard a{color:#1d5fd0;font-weight:700}
 

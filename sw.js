@@ -2,7 +2,7 @@
    · 앱 껍데기는 캐시 우선(설치 때 cache:"reload" 로 새로 받아 둔다) → 배포 후 버전만 올리면 폰에서 바로 새 화면
    · 스냅샷(암호화 데이터)은 네트워크 우선 → 새 오더보드가 있으면 바로 반영
 */
-const CACHE = "aihub-pwa-v21";
+const CACHE = "aihub-pwa-v22";
 const SHELL = [
   "./",
   "index.html",
