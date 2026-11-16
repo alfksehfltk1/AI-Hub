@@ -565,7 +565,7 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 
 .bbub{
   background:#fff;border-radius:16px;padding:10px 13px;font-size:13.6px;line-height:1.62;color:#2c2c26;
-  box-shadow:0 1px 1px rgba(30,30,20,.06);word-break:break-word;white-space:pre-wrap;max-width:100%;
+  box-shadow:0 1px 1px rgba(30,30,20,.06);overflow-wrap:break-word;word-break:normal;white-space:pre-wrap;max-width:100%;
 }
 .bmsg.called .bbub{border:2px solid #ffc93c;background:#fffdf3;box-shadow:0 2px 12px rgba(255,201,60,.24);padding:9px 12px}
 .bmsg.err .bbub{background:#fdf2f2;border:1px solid #f2c9c9;color:#8a2f2f;font-size:12.5px}
