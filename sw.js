@@ -2,7 +2,7 @@
    · 앱 껍데기는 캐시 우선(설치 때 cache:"reload" 로 새로 받아 둔다) → 배포 후 버전만 올리면 폰에서 바로 새 화면
    · 스냅샷(암호화 데이터)은 네트워크 우선 → 새 오더보드가 있으면 바로 반영
 */
-const CACHE = "aihub-pwa-v8";
+const CACHE = "aihub-pwa-v9";
 const SHELL = [
   "./",
   "index.html",
@@ -19,8 +19,8 @@ const SHELL = [
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      // HTTP 캐시를 건너뛰고 새 파일을 받아 둔다 (GitHub Pages 의 max-age=600 무시)
-      .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))))
+      // GitHub Pages CDN 은 같은 경로를 10분간 캐시한다 → 버전 쿼리를 붙여 새 파일을 받아 둔다
+      .then((c) => c.addAll(SHELL.map((u) => new Request(withVersion(u), { cache: "reload" }))))
       .catch(() => {})
       .then(() => self.skipWaiting())
   );
@@ -37,6 +37,12 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("message", (e) => {
   if (e.data === "skip-waiting") self.skipWaiting();
 });
+
+// 같은 경로라도 버전이 바뀌면 CDN 캐시를 건너뛰도록 쿼리를 붙인다
+function withVersion(u) {
+  if (u === "./") return `${u}?v=${CACHE}`;
+  return `${u}${u.includes("?") ? "&" : "?"}v=${CACHE}`;
+}
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
