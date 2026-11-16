@@ -676,6 +676,17 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 .field select{border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-size:12.5px;background:#f8fafd;width:100%}
 .field select:focus{outline:none;border-color:#b9d1f7;background:#fff;box-shadow:0 0 0 3px rgba(47,123,246,.1)}
 
+/* 상단 바 — 모델 배지가 잘리지 않게, 제목이 줄어들게 */
+.room-title{min-width:0}
+.room-tt{min-width:0;overflow:hidden}
+.room-tt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-tools{flex:none}
+.engine-pill{flex:none}
+@media (max-width:640px){
+  .composer-foot{display:none}          /* 폰에서는 안내줄을 숨겨 입력창이 잘리지 않게 */
+  .room-composer{padding-bottom:calc(9px + env(safe-area-inset-bottom))}
+}
+
 /* =========================================================
    PWA · 잠금 화면 (정적 배포판에서만 붙습니다)
    ========================================================= */
