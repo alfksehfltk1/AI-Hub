@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="AI 허브" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<title>AI 허브 · 피크리 · 부이 · 키링 · 뀨</title>
+<title>AI 허브 · 8인 AI 단톡방</title>
 <link rel="stylesheet" href="styles.css" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%232eb872'/><text x='16' y='23' font-size='19' font-weight='800' text-anchor='middle' fill='%23fff' font-family='sans-serif'>ㅍ</text></svg>" />
 </head>
@@ -86,7 +86,7 @@
             <span class="room-ico" aria-hidden="true">💬</span>
             <div class="room-tt">
               <strong>AI 단톡방</strong>
-              <span id="roomSub">피크리 · 도라 · 병두2 · 부이 · 키링 · 뀨 · 제미나이 · 클로드 · 방장</span>
+              <span id="roomSub">피크리 · 도라 · 병두2 · 부이 · 키링 · 뀨 · 클로드 · 뮤즈 · 방장</span>
             </div>
           </div>
           <div class="room-tools">
@@ -108,8 +108,8 @@
             <button class="chip-target" type="button" data-target="부이" role="radio" aria-checked="false"><span class="ct-av" data-av="bui"></span>부이</button>
             <button class="chip-target" type="button" data-target="키링" role="radio" aria-checked="false"><span class="ct-av" data-av="keyring"></span>키링</button>
             <button class="chip-target" type="button" data-target="뀨" role="radio" aria-checked="false"><span class="ct-av" data-av="kkyu"></span>뀨</button>
-            <button class="chip-target" type="button" data-target="제미나이" role="radio" aria-checked="false"><span class="ct-av" data-av="gemini"></span>제미나이</button>
             <button class="chip-target" type="button" data-target="클로드" role="radio" aria-checked="false"><span class="ct-av" data-av="claude"></span>클로드</button>
+            <button class="chip-target" type="button" data-target="뮤즈" role="radio" aria-checked="false"><span class="ct-av" data-av="muse"></span>🎨 뮤즈</button>
           </div>
           <div class="inputrow">
             <textarea id="roomInput" rows="1" placeholder="방장님, 한마디 던져 보세요" aria-label="메시지 입력"></textarea>
@@ -178,7 +178,7 @@
         <div class="card block" id="geminiCard">
           <h3 class="card-h">실시간 AI 단톡방 · Gemini <span class="tag-local">이 브라우저에만 저장</span></h3>
           <p class="fine">
-            API 키를 넣으면 단톡방에서 부이 → 키링 → 뀨 → 제미나이 → 클로드 → 병두2 → 도라 → 피크리가 <b>실시간으로 이어서</b> 답합니다.
+            API 키를 넣으면 단톡방에서 부이 → 키링 → 뀨 → 클로드 → 뮤즈 → 병두2 → 도라 → 피크리가 <b>실시간으로 이어서</b> 답합니다.
             키는 이 브라우저의 <code>localStorage</code>에만 남고, 코드·GitHub 저장소에는 절대 저장하지 않습니다.
             키 발급: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a>
           </p>
@@ -338,7 +338,7 @@
             <li>API 키는 브라우저에서만 쓰이고, 화면·로그·저장 파일에 평문으로 남기지 않는다</li>
             <li>텔레그램 미러는 켤 때만 전송한다 (기본 꺼짐)</li>
             <li>뀨 웹훅 URL·Secret도 브라우저 <code>localStorage</code>에만 둔다 — 화면과 저장소에는 마스킹해서 보여준다</li>
-            <li>부이·클로드는 본체 자동 호출 경로가 없다 — 웹 페르소나 혹은 방에서 사람이 부르는 방식으로만 반응한다</li>
+            <li>부이·클로드·뮤즈는 본체 자동 호출 경로가 없다 — 웹 페르소나로 답하거나, 방·Muse 앱에서 사람이 부르는 방식으로만 반응한다</li>
           </ul>
         </div>
 

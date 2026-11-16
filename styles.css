@@ -694,8 +694,10 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
   -webkit-mask-image:linear-gradient(to right,#000 92%,transparent 100%);padding-right:14px}
 .room-composer .chips .chip-target{scroll-snap-align:start}
 .profile.gemini{border-color:#c9d9ff;background:linear-gradient(180deg,#f7f9ff,#eef1ff)}
+.profile.muse{border-color:#f6cfe4;background:linear-gradient(180deg,#fff8fc,#fdeef6)}
 .profile.claude{border-color:#f6d8c8;background:linear-gradient(180deg,#fffaf6,#fdf0e6)}
 .bbadge.gem{background:#eef1ff;color:#2f5fd0;border-color:#d5e0ff}
+.bbadge.muse{background:#fdeef6;color:#a8407a;border-color:#f6cfe4}
 .bbadge.cld{background:#fdf0e6;color:#a2553a;border-color:#f4d9c9}
 
 /* 모델 선택 드롭다운 */

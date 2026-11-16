@@ -33,7 +33,7 @@
       role: "총괄 · 검수 · 최종 정리",
       persona: [
         "너는 '피크리'다. 김병두 님의 총괄 비서이자 이 단톡방의 진행자다.",
-        "네 일은 오더를 정리하고, 병두2·부이·키링·뀨·제미나이·클로드 여섯의 의견을 검수해 최종 결론과 다음 액션을 정하는 것이다.",
+        "네 일은 오더를 정리하고, 병두2·부이·키링·뀨·클로드·뮤즈 여섯의 의견을 검수해 최종 결론과 다음 액션을 정하는 것이다.",
         "말투는 밝고 당차는 존댓말(~요/~습니다)을 쓰고, 숫자·기한·비용은 콕 집어 말한다.",
         "여덟 명 중 마지막 차례에서는 앞선 일곱 의견을 한두 줄로 묶고 '결론 → 다음 할 일'만 짧게 제시한다(300자 이내).",
         "혼자 독단하지 말고 위험한 부분(계정 제재·비용·마감)은 먼저 짚는다.",
@@ -90,13 +90,14 @@
         "말투는 담백한 존댓말. '맞습니다, 다만' 구조로 말하고, 확인 안 된 건 확인 안 됐다고 말한다.",
       ].join(" "),
     },
-    gemini: {
-      name: "제미나이", badge: "제미나이 AI", cls: "gem",
-      role: "구글 검색 · 데이터 분석",
+    muse: {
+      name: "뮤즈", badge: "실행·정리 담당", cls: "muse",
+      role: "이메일·문서·검색·일정 정리 (웹 페르소나 · 본체는 Muse 앱에서 직접 실행)",
       persona: [
-        "너는 '제미나이'다. 구글·유튜브·검색 트렌드와 방대한 데이터 분석 담당이다.",
-        "네 일은 최신 정보와 수치를 근거로 팩트체크하고, 검색해 확인해야 할 것을 콕 집어 주는 것이다.",
-        "말투는 또박또박한 존댓말. '확인된 사실 / 확인 필요'를 구분해서 말하고, 숫자는 단위까지 붙인다.",
+        "너는 '뮤즈'다. 실행·정리 담당으로, 김병두 님의 이메일·문서·검색·일정을 맡는다.",
+        "이 단톡방에서는 웹 페르소나로만 답한다. 메일 발송·문서 작성·일정 등록 같은 실제 실행은 여기서 하지 않고 본체인 Muse 앱에서 직접 한다.",
+        "그래서 답할 때는 '무엇을 어떤 순서로 정리하면 되는지'를 실행 목록으로 만들고, '이건 Muse 앱에서 직접 실행'이라고 밝힌다.",
+        "말투는 간결한 존댓말. 확인 안 된 일정·메일 내용은 지어내지 말고 '확인 필요'라고 말한다.",
       ].join(" "),
     },
     claude: {
@@ -109,8 +110,8 @@
       ].join(" "),
     },
   };
-  const ROUND = ["bui", "keyring", "kkyu", "gemini", "claude", "byeongdu2", "dola", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
-  const NAME2KEY = { 피크리: "pikri", 도라: "dola", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 제미나이: "gemini", 클로드: "claude" };
+  const ROUND = ["bui", "keyring", "kkyu", "claude", "muse", "byeongdu2", "dola", "pikri"]; // 모두에게 → 이 순서로 이어 말한다
+  const NAME2KEY = { 피크리: "pikri", 도라: "dola", 병두2: "byeongdu2", 부이: "bui", 키링: "keyring", 뀨: "kkyu", 클로드: "claude", 뮤즈: "muse" };
 
   const RULES = [
     "[대화 규칙]",
@@ -131,8 +132,8 @@
     bui: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#f2f0ff"/><circle cx="20" cy="20" r="13" fill="none" stroke="#7a6cf0" stroke-width="7.5"/><circle cx="20" cy="20" r="13" fill="none" stroke="#42a5ff" stroke-width="7.5" stroke-dasharray="10.2 10.2" stroke-dashoffset="5.1"/><circle cx="20" cy="20" r="4.6" fill="#ffffff"/></svg>`,
     keyring: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#ffd83d"/><path d="M23.2 6.5 12.4 21.6h6.2l-2 11.9 11-15.4h-6.3z" fill="#7a4b00"/></svg>`,
     kkyu: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#e8f1ff"/><path d="M14 10.5 29.5 20 14 29.5z" fill="#2f7bf6" stroke="#2f7bf6" stroke-width="3" stroke-linejoin="round"/></svg>`,
-    gemini: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#eef1ff"/><path d="M20 6.5c1.5 6.4 4.6 9.5 11 11-6.4 1.5-9.5 4.6-11 11-1.5-6.4-4.6-9.5-11-11 6.4-1.5 9.5-4.6 11-11z" fill="#4285f4"/><path d="M30.5 25c.7 2.6 1.9 3.8 4.5 4.5-2.6.7-3.8 1.9-4.5 4.5-.7-2.6-1.9-3.8-4.5-4.5 2.6-.7 3.8-1.9 4.5-4.5z" fill="#a142f4"/></svg>`,
     claude: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#fdf0e6"/><g stroke="#d97757" stroke-width="3" stroke-linecap="round"><path d="M20 9v22"/><path d="M10.5 14.5l19 11"/><path d="M29.5 14.5l-19 11"/></g><circle cx="20" cy="20" r="3.2" fill="#b85c3c"/></svg>`,
+    muse: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#fdeef6"/><text x="20" y="28" font-size="21" text-anchor="middle">🎨</text></svg>`,
     me: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="#4f74e0"/><circle cx="20" cy="15.5" r="6" fill="#ffffff" opacity=".95"/><path d="M7.5 36c1.6-7.2 6.6-10.6 12.5-10.6S30.9 28.8 32.5 36z" fill="#ffffff" opacity=".95"/></svg>`,
   };
 
@@ -177,7 +178,7 @@
 
   function mentionHTML(text) {
     return esc(text)
-      .replace(/@(도라|병두2|피크리|부이|키링|뀨|제미나이|클로드|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
+      .replace(/@(도라|병두2|피크리|부이|키링|뀨|클로드|뮤즈|방장|전체|모두에게)/g, '<span class="mention">@$1</span>')
       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
   }
   function toast(msg) {
@@ -935,8 +936,8 @@
     if (!raw) return;
     let targets = [state.target];
     // '@키링' · '키링아' · '키링,' 처럼 부르면 그 AI만 답한다
-    const lead = /^@(도라|병두2|피크리|부이|키링|뀨|제미나이|클로드)(?=\s|$|[,.!?~])/.exec(raw)
-      || /^(도라|병두2|피크리|부이|키링|뀨|제미나이|클로드)(?:\s*[아야])?(?=[\s,.!?~]|$)/.exec(raw);
+    const lead = /^@(도라|병두2|피크리|부이|키링|뀨|클로드|뮤즈)(?=\s|$|[,.!?~])/.exec(raw)
+      || /^(도라|병두2|피크리|부이|키링|뀨|클로드|뮤즈)(?:\s*[아야])?(?=[\s,.!?~]|$)/.exec(raw);
     if (lead) targets = [lead[1]];
     input.value = "";
     input.style.height = "auto";
@@ -967,7 +968,7 @@
     if (lastFixed.length) {
       lines.push(`최근 결론은 ${lastFixed.map((o) => `${o.id} '${o.text.slice(0, 34)}…'`).join(", ")} 입니다.`);
     }
-    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 제미나이 → 클로드 → 병두2 → 도라 → 제가 이어서 답합니다. '키링아', '뀨야'처럼 부르거나 칩으로 골라도 그 AI만 즉답해요. 편하게 지시해 주세요! 🟢`);
+    lines.push(`여기서 말 걸면 부이 → 키링 → 뀨 → 클로드 → 뮤즈 → 병두2 → 도라 → 제가 이어서 답합니다. '키링아', '뮤즈야'처럼 부르거나 칩으로 골라도 그 AI만 즉답해요. 편하게 지시해 주세요! 🟢`);
     state.msgs.push({
       id: "seed-2", at: nowISO(), who: "pikri", kind: "msg",
       text: lines.join(" "),
@@ -1013,7 +1014,7 @@
     { key: "dola", name: "도라", reach: "웹 전용", via: "Gemini 페르소나 + 웹 즉답 (외부 API·웹훅 없음)", note: "오더 정리·문서 최종 검수·다국어·AI 흔적 제거를 웹에서만 수행", cfg: "gem" },
     { key: "claude", name: "클로드", reach: "가능", via: "Claude API 직접 호출(키 있을 때) + 웹 즉답", note: "키가 없으면 Gemini 기반 클로드 페르소나로 자동 대체된다", cfg: "claude" },
     { key: "bui", name: "부이", reach: "조건부", via: "텔레그램 방에서 사람이 직접 부르면 반응", note: "자동 수신 API·웹훅이 없어 스스로 깨어나지 못한다. 방으로 오더는 가지만 부이 본체는 수동 호출" , cfg: null },
-    { key: "gemini", name: "제미나이", reach: "웹 전용", via: "Gemini API 직접 호출 (웹 즉답)", note: "설정에 Gemini 키가 있어야 동작", cfg: "gem" },
+    { key: "muse", name: "뮤즈", reach: "웹 전용", via: "웹 페르소나 (본체 실행은 Muse 앱에서)", note: "이메일·문서·검색·일정 정리는 Muse 앱에서 직접 실행 — 여기서는 정리·실행 목록만", cfg: "gem" },
   ];
 
   function linkState(row) {
