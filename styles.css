@@ -542,7 +542,7 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 .room-empty{text-align:center;color:#a8a498;font-size:12px;padding:36px 10px}
 
 /* 말풍선 */
-.bmsg{display:flex;gap:8px;align-items:flex-start;animation:rise .22s ease both}
+.bmsg{display:flex;width:100%;gap:8px;align-items:flex-start;animation:rise .22s ease both}
 .bmsg .bav{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;box-shadow:0 1px 2px rgba(30,30,20,.12);background:#fff}
 .bmsg .bav svg{display:block;width:100%;height:100%}
 .bbody{min-width:0;max-width:calc(100% - 48px);display:flex;flex-direction:column;align-items:flex-start}
@@ -572,7 +572,7 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 .bbub b{font-weight:800}
 .ghost{color:#cfcabb}
 
-.bmsg.me{align-self:flex-end;flex-direction:row-reverse}
+.bmsg.me{align-self:stretch;flex-direction:row-reverse}
 .bmsg.me .bbody{align-items:flex-end;max-width:84%}
 .bmsg.me .bhead{margin:0 2px 4px 0}
 .bmsg.me .bbub{background:#fee500;color:#3d3100;border-radius:16px 4px 16px 16px;box-shadow:0 1px 1px rgba(150,120,0,.16)}
