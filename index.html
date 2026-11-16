@@ -236,6 +236,34 @@
           <p class="fine" id="verifyResult"></p>
         </div>
 
+        <!-- 뀨 웹훅 -->
+        <div class="card block" id="kkyuCard">
+          <h3 class="card-h">뀨 웹훅 연동 <span class="tag-local">이 브라우저에만 저장</span></h3>
+          <p class="fine">
+            뀨 웹훅 <b>URL</b>과 <b>Secret</b>을 넣으면 단톡방에서 글을 보낼 때 오더가 <b>텔레그램 방과 뀨 본체</b>로 동시에 나갑니다.
+            뀨는 웹훅을 받는 즉시 깨어나고, 텔레그램 방은 피크리 5분 폴링 · 키링 5분 순찰이 집어 갑니다.
+            주소와 Secret은 이 브라우저의 <code>localStorage</code>에만 남고 코드·GitHub 저장소에는 넣지 않습니다.
+          </p>
+          <label class="field">
+            <span>뀨 웹훅 URL <b class="state" id="kkyuUrlState">없음</b></span>
+            <input id="kkyuWebhook" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://… (Apps Script 웹앱 주소)" />
+          </label>
+          <label class="field">
+            <span>뀨 웹훅 Secret <b class="state" id="kkyuSecretState">없음</b></span>
+            <input id="kkyuSecret" type="password" autocomplete="off" spellcheck="false" placeholder="웹훅 Secret (비워두면 저장 안 함)" />
+          </label>
+          <label class="switch">
+            <input id="kkyuRelay" type="checkbox" />
+            <span>메시지 전송 시 텔레그램 · 뀨 웹훅 동시 전송</span>
+          </label>
+          <div class="row-actions">
+            <button class="ghost-btn primary" id="saveKkyu" type="button">저장</button>
+            <button class="ghost-btn" id="clearKkyu" type="button">지우기</button>
+            <button class="ghost-btn" id="testKkyu" type="button">뀨 웹훅 테스트</button>
+          </div>
+          <p class="fine" id="kkyuResult">봇 토큰·방 ID 또는 웹훅 URL 중 하나만 있어도 위 스위치는 켜집니다.</p>
+        </div>
+
         <!-- 대화 기록 -->
         <div class="card block">
           <h3 class="card-h">대화 기록</h3>
@@ -264,6 +292,7 @@
             <li>앱은 PIN 잠금 뒤에 열린다 — 폰을 잠깐 빌려줘도 대화·오더가 보이지 않는다</li>
             <li>API 키는 브라우저에서만 쓰이고, 화면·로그·저장 파일에 평문으로 남기지 않는다</li>
             <li>텔레그램 미러는 켤 때만 전송한다 (기본 꺼짐)</li>
+            <li>뀨 웹훅 URL·Secret도 브라우저 <code>localStorage</code>에만 둔다 — 화면과 저장소에는 마스킹해서 보여준다</li>
           </ul>
         </div>
 

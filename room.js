@@ -2,13 +2,14 @@
    AI 허브 — 실시간 AI 단톡방 엔진 (room.js)  v3
    · 카톡형 말풍선 타임라인 + 하단 고정 입력창
    · Gemini API(브라우저 직접 호출, 스트리밍)로 4명 AI가 연쇄 응답
-   · API 키·모델은 이 브라우저 localStorage 에만 저장한다
+   · 보낸 글을 텔레그램 방 + 뀨 웹훅으로 동시에 전달(오더 릴레이)
+   · API 키·모델·봇 토큰·웹훅 주소/Secret 은 이 브라우저 localStorage 에만 저장한다
    ========================================================= */
 (() => {
   "use strict";
 
   const LS_SETTINGS = "aihub.v2.local"; // 텔레그램 토큰·방 ID (app.js 와 공유)
-  const LS_GEM = "aihub.gemini.v1";     // Gemini 키·모델·미러 설정
+  const LS_GEM = "aihub.gemini.v1";     // Gemini 키·모델·미러·뀨 웹훅 설정
   const LS_ROOM = "aihub.room.v2";      // 단톡방 대화 기록
   const MAX_MSGS = 300;
   const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta";
@@ -114,7 +115,8 @@
     target: "모두에게",
     running: false,
     abort: null,
-    settings: { key: "", model: DEFAULT_MODEL, mirror: false },
+    settings: { key: "", model: DEFAULT_MODEL, mirror: false, kkyuUrl: "", kkyuSecret: "", relay: null },
+    tg: { token: "", chatId: "" },
     models: [],
     nearBottom: true,
   };
@@ -170,12 +172,160 @@
     catch (_) { return false; }
   }
   function loadSettings() {
-    state.settings = readJSON(LS_GEM, { key: "", model: DEFAULT_MODEL, mirror: false });
-    if (!state.settings.model) state.settings.model = DEFAULT_MODEL;
+    const s = readJSON(LS_GEM, {});
+    state.settings = {
+      key: String(s.key || ""),
+      model: String(s.model || DEFAULT_MODEL),
+      mirror: !!s.mirror,
+      kkyuUrl: String(s.kkyuUrl || ""),
+      kkyuSecret: String(s.kkyuSecret || ""),
+      relay: (s.relay === true || s.relay === false) ? s.relay : null, // null = 자동(자격증명 있으면 켜짐)
+    };
     const shared = readJSON(LS_SETTINGS, {});
     state.tg = { token: String(shared.token || ""), chatId: String(shared.chatId || "") };
   }
   function saveSettings() { writeJSON(LS_GEM, state.settings); }
+
+  /* ---------------- 오더 릴레이 (텔레그램 + 뀨 웹훅) ---------------- */
+  const RELAY_NAME = { tg: "텔레그램", kkyu: "뀨" };
+
+  function tgCreds() {
+    const shared = readJSON(LS_SETTINGS, {});
+    return {
+      token: String(shared.token || state.tg.token || "").trim(),
+      chatId: String(shared.chatId || state.tg.chatId || "").trim(),
+    };
+  }
+  function hasTg() { const c = tgCreds(); return !!(c.token && c.chatId); }
+  function hasKkyu() { return !!String(state.settings.kkyuUrl || "").trim(); }
+
+  // 토글을 한 번도 건드리지 않았으면(자동) 자격증명이 있을 때 켜진 상태로 본다
+  function relayEnabled() {
+    if (state.settings.relay === true || state.settings.relay === false) return state.settings.relay;
+    return hasTg() || hasKkyu();
+  }
+
+  function orderStamp() {
+    return nowISO().replace("T", " ").slice(0, 16);
+  }
+
+  function orderText(text, targets) {
+    const named = (targets || []).filter((t) => t && t !== "모두에게");
+    const head = named.length ? `@${named.join(" @")}` : "@모두";
+    return [
+      `[AI허브 오더] ${head}`,
+      String(text || "").trim(),
+      "",
+      `— AI 허브 · ${orderStamp()} · 대상 ${named.length ? named.join(" · ") : "모두에게"}`,
+    ].join("\n");
+  }
+
+  async function sendTelegramOrder(text) {
+    if (!hasTg()) return "skip";
+    const { token, chatId } = tgCreds();
+    const chunks = [];
+    for (let i = 0; i < text.length; i += 3500) chunks.push(text.slice(i, i + 3500));
+    let outcome = "ok";
+    for (const chunk of chunks) {
+      const form = new URLSearchParams();
+      form.set("chat_id", chatId);
+      form.set("text", chunk);
+      form.set("disable_web_page_preview", "true");
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", body: form });
+        const j = await res.json().catch(() => null);
+        if (!res.ok || !j || j.ok === false) {
+          outcome = `fail:${(j && j.description) || res.status}`;
+          break;
+        }
+      } catch (e) {
+        outcome = `fail:${(e && e.message) || "network"}`;
+        break;
+      }
+    }
+    return outcome;
+  }
+
+  async function postKkyu(payload) {
+    const url = String(state.settings.kkyuUrl || "").trim();
+    if (!url) return "skip";
+    return postWebhook(url, payload);
+  }
+
+  async function postWebhook(url, payload) {
+    const body = JSON.stringify(payload);
+    try {
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+      return res.ok ? "ok" : `fail:HTTP ${res.status}`;
+    } catch (_) {
+      // CORS 로 응답을 못 읽는 웹훅이어도 전송 자체는 나가게 (응답은 확인 불가)
+      try {
+        await fetch(url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=UTF-8" }, body });
+        return "nc";
+      } catch (e2) {
+        return `fail:${(e2 && e2.message) || "network"}`;
+      }
+    }
+  }
+
+  function kkyuPayload(summary, extra) {
+    return Object.assign({
+      secret: String(state.settings.kkyuSecret || ""),
+      source: "ai-hub",
+      summary: summary,
+    }, extra || {});
+  }
+
+  function relayBadgeHTML(m) {
+    const r = m.relay;
+    if (!r) return "";
+    if (r.pending) return `<span class="relay-badge wait" title="텔레그램 · 뀨로 보내는 중">📡 전송 중…</span>`;
+    const ok = [], nc = [], bad = [];
+    for (const ch of ["tg", "kkyu"]) {
+      const s = r[ch];
+      if (s === "ok") ok.push(RELAY_NAME[ch]);
+      else if (s === "nc") nc.push(RELAY_NAME[ch]);
+      else if (s && s !== "skip") bad.push(RELAY_NAME[ch]);
+    }
+    const bits = [];
+    if (ok.length) bits.push(`${ok.join(" · ")} 전달됨`);
+    if (nc.length) bits.push(`${nc.join(" · ")} 전송(확인 불가)`);
+    if (bad.length) bits.push(`${bad.join(" · ")} 실패`);
+    if (!bits.length) return "";
+    const cls = bad.length ? (ok.length || nc.length ? "part" : "fail") : (nc.length && !ok.length ? "wait" : "ok");
+    const detail = [r.tgDetail, r.kkyuDetail].filter(Boolean).join(" / ");
+    return `<span class="relay-badge ${cls}" title="${esc(detail || bits.join(" · "))}">📡 ${esc(bits.join(" · "))}</span>`;
+  }
+
+  async function relayOrder(m, text, targets) {
+    if (!relayEnabled() || (!hasTg() && !hasKkyu())) return;
+    m.relay = { pending: true };
+    paintRelay(m);
+    const summary = orderText(text, targets);
+    const [tg, kkyu] = await Promise.all([
+      sendTelegramOrder(summary),
+      postKkyu(kkyuPayload(summary, { text: String(text || ""), targets: targets || [], at: nowISO() })),
+    ]);
+    const norm = (v) => (v === "ok" || v === "nc" || v === "skip" ? v : "fail");
+    m.relay = {
+      tg: norm(tg), kkyu: norm(kkyu),
+      tgDetail: String(tg).startsWith("fail:") ? String(tg).slice(5) : "",
+      kkyuDetail: String(kkyu).startsWith("fail:") ? String(kkyu).slice(5) : "",
+      at: nowISO(),
+    };
+    paintRelay(m);
+    saveRoom();
+  }
+
+  function paintRelay(m) {
+    const el = msgEl(m.id);
+    if (!el) return;
+    const bbody = $(".bbody", el);
+    if (!bbody) return;
+    let foot = $(".bfoot", el);
+    if (!foot) { foot = document.createElement("div"); foot.className = "bfoot"; bbody.appendChild(foot); }
+    foot.innerHTML = `${relayBadgeHTML(m)}<span class="btime">${clockKR(m.at)}</span>`;
+  }
 
   function loadRoom() {
     const saved = readJSON(LS_ROOM, { msgs: [] });
@@ -366,7 +516,7 @@
           <div class="bhead me"><span class="bname">방장</span><span class="bbadge admin">방장</span></div>
           ${call}
           <div class="bbub">${mentionHTML(m.text)}</div>
-          <div class="bfoot"><span class="btime">${clockKR(m.at)}</span></div>
+          <div class="bfoot">${relayBadgeHTML(m)}<span class="btime">${clockKR(m.at)}</span></div>
         </div>
       </div>`;
     }
@@ -625,7 +775,9 @@
     input.value = "";
     input.style.height = "auto";
     state.nearBottom = true;
-    pushMsg({ who: "me", kind: "msg", text: raw, targets });
+    const mine = pushMsg({ who: "me", kind: "msg", text: raw, targets });
+    // 화면 즉답(Gemini)과 별개로, 텔레그램 방 + 뀨 웹훅으로 오더를 먼저 쏜다
+    relayOrder(mine, raw, targets).catch(() => {});
     runRound(raw, targets.length ? targets : ["모두에게"]).catch((e) => {
       pushMsg({ who: "sys", kind: "sys", text: `오류: ${(e && e.message) || e}` });
       state.running = false; setRunningUI(false); updateRoundPill(0, 0, "");
@@ -673,6 +825,7 @@
     }
     const mirror = $("#tgMirror");
     if (mirror) mirror.checked = !!state.settings.mirror;
+    renderKkyuCard();
     setEnginePill();
     const info = $("#roomHistoryInfo");
     if (info) info.textContent = `저장된 메시지 ${state.msgs.length}개 · 이 브라우저에만 남습니다`;
@@ -681,6 +834,38 @@
       const ids = state.models.length ? state.models : MODEL_PRESETS.map((m) => m.id);
       dl.innerHTML = ids.map((id) => `<option value="${esc(id)}"></option>`).join("");
     }
+  }
+
+  function renderKkyuCard() {
+    const urlEl = $("#kkyuWebhook");
+    if (urlEl && document.activeElement !== urlEl) urlEl.value = state.settings.kkyuUrl || "";
+    const secEl = $("#kkyuSecret");
+    if (secEl && document.activeElement !== secEl) {
+      secEl.value = state.settings.kkyuSecret ? "••••••••••••" : "";
+      secEl.placeholder = state.settings.kkyuSecret ? "저장됨 (바꾸려면 새로 입력)" : "웹훅 Secret (비워두면 저장 안 함)";
+    }
+    const urlState = $("#kkyuUrlState");
+    if (urlState) urlState.textContent = state.settings.kkyuUrl ? "저장됨" : "없음";
+    const secState = $("#kkyuSecretState");
+    if (secState) secState.textContent = state.settings.kkyuSecret ? "저장됨" : "없음";
+    const relay = $("#kkyuRelay");
+    if (relay) relay.checked = relayEnabled();
+    const res = $("#kkyuResult");
+    if (res && !res.dataset.sticky) {
+      const chans = [];
+      if (hasTg()) chans.push("텔레그램 방");
+      if (hasKkyu()) chans.push("뀨 웹훅");
+      res.textContent = chans.length
+        ? `전송 대상: ${chans.join(" + ")} · 지금 ${relayEnabled() ? "켜짐" : "꺼짐"}`
+        : "봇 토큰·방 ID 또는 웹훅 URL 중 하나만 있어도 위 스위치는 켜집니다.";
+    }
+  }
+
+  function typedKkyuUrl() { return String($("#kkyuWebhook")?.value || "").trim(); }
+  function typedSecret() {
+    const typed = String($("#kkyuSecret")?.value || "").trim();
+    if (typed && !/^•+$/.test(typed)) return typed;
+    return String(state.settings.kkyuSecret || "").trim();
   }
 
   function typedKey() {
@@ -788,6 +973,67 @@
     $("#tgMirror")?.addEventListener("change", (e) => {
       state.settings.mirror = !!e.target.checked;
       saveSettings();
+    });
+    // 뀨 웹훅 · 오더 동시 전송
+    $("#kkyuRelay")?.addEventListener("change", (e) => {
+      state.settings.relay = !!e.target.checked;
+      saveSettings();
+      renderKkyuCard();
+      toast(state.settings.relay ? "메시지 전송 시 텔레그램 · 뀨로 같이 보냅니다." : "오더 동시 전송을 꺼습니다.");
+    });
+    $("#saveKkyu")?.addEventListener("click", () => {
+      const url = typedKkyuUrl();
+      if (url && !/^https?:\/\/\S+$/i.test(url)) { toast("웹훅 URL 은 https:// 로 시작하는 주소여야 합니다."); return; }
+      state.settings.kkyuUrl = url;
+      state.settings.kkyuSecret = typedSecret();
+      if (state.settings.relay === null) state.settings.relay = hasTg() || hasKkyu();
+      saveSettings();
+      renderKkyuCard();
+      const res = $("#kkyuResult");
+      if (res) {
+        res.dataset.sticky = "1";
+        res.classList.remove("err");
+        res.textContent = state.settings.kkyuUrl
+          ? `저장됨 · ${(hasKkyu() ? "뀨 웹훅" : "")}${hasKkyu() && hasTg() ? " + " : ""}${hasTg() ? "텔레그램 방" : ""}${relayEnabled() ? " 으로 동시 전송 중" : " (전송 꺼짐)"}`
+          : "웹훅 URL 이 비어 있습니다. 텔레그램만으로도 오더는 나갑니다.";
+      }
+      toast("이 브라우저에만 저장했습니다.");
+    });
+    $("#clearKkyu")?.addEventListener("click", () => {
+      state.settings.kkyuUrl = "";
+      state.settings.kkyuSecret = "";
+      saveSettings();
+      const urlEl = $("#kkyuWebhook"); if (urlEl) urlEl.value = "";
+      const secEl = $("#kkyuSecret"); if (secEl) secEl.value = "";
+      renderKkyuCard();
+      const res = $("#kkyuResult");
+      if (res) { res.dataset.sticky = "1"; res.textContent = "뀨 웹훅 설정을 지웠습니다 (텔레그램 설정은 그대로)."; }
+      toast("뀨 웹훅 설정을 지웠습니다.");
+    });
+    $("#testKkyu")?.addEventListener("click", async () => {
+      const res = $("#kkyuResult");
+      const url = typedKkyuUrl();
+      if (!url) {
+        if (res) { res.dataset.sticky = "1"; res.textContent = "웹훅 URL 을 먼저 넣어 주세요."; }
+        toast("웹훅 URL 이 비어 있습니다.");
+        return;
+      }
+      if (!/^https?:\/\/\S+$/i.test(url)) {
+        if (res) { res.dataset.sticky = "1"; res.textContent = "웹훅 URL 형식이 아닙니다 (https://…)."; }
+        return;
+      }
+      if (res) { res.dataset.sticky = "1"; res.classList.remove("err"); res.textContent = "웹훅 테스트 전송 중…"; }
+      const r = await postWebhook(url, {
+        secret: typedSecret(),
+        source: "ai-hub",
+        summary: "[AI허브 오더] 연결 테스트 — 피크리 → 뀨",
+        targets: ["뀨"],
+        at: nowISO(),
+      });
+      if (!res) return;
+      if (r === "ok") { res.classList.remove("err"); res.textContent = "✅ 뀨 웹훅이 응답했습니다. 이제 글을 보내면 텔레그램과 같이 나갑니다."; }
+      else if (r === "nc") { res.classList.remove("err"); res.textContent = "📡 전송은 나갔습니다. 웹훅이 응답을 공개하지 않아(CORS) 확인만 불가합니다 — 뀨 쪽에서 받았는지 보세요."; }
+      else { res.classList.add("err"); res.textContent = `❌ 웹훅 전송 실패 — ${String(r).replace(/^fail:/, "")}`; }
     });
     $("#roomReset")?.addEventListener("click", () => {
       if (!window.confirm("이 기기의 단톡방 기록을 모두 지울까요? (오더보드·시트는 그대로입니다)")) return;
