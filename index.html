@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#2563eb" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="AI 허브" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<title>AI 허브 · 피크리 · 부이 · 키링 · 뀨</title>
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%232eb872'/><text x='16' y='23' font-size='19' font-weight='800' text-anchor='middle' fill='%23fff' font-family='sans-serif'>ㅍ</text></svg>" />
+</head>
+<body>
+<!-- AI 허브 PWA — 잠금 화면 (스냅샷은 AES-GCM으로 암호화되어 있습니다) -->
+<div class="lock" id="lock">
+  <form class="lock-card" id="lockForm" autocomplete="off">
+    <div class="lock-mark" aria-hidden="true">
+      <svg viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="#2563eb"/><text x="20" y="28" font-size="22" font-weight="800" text-anchor="middle" fill="#ffffff" font-family="sans-serif">ㅍ</text><circle cx="32" cy="8" r="4" fill="#ffcf3f"/></svg>
+    </div>
+    <h1 class="lock-title">AI 허브</h1>
+    <p class="lock-sub">오더보드는 잠겨 있습니다.<br>PIN을 넣으면 열립니다.</p>
+    <label class="lock-field">
+      <span class="sr-only">PIN</span>
+      <input id="lockPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="• • • • • •" aria-label="PIN" />
+    </label>
+    <button class="send-btn lock-btn" id="lockBtn" type="submit">열기</button>
+    <p class="lock-msg" id="lockMsg" role="status"></p>
+    <p class="lock-fine">이 기기에서는 한 번 열면 기억합니다.<br>PIN을 잊으면 피크리에게 다시 만들어 달라고 하세요.</p>
+  </form>
+</div>
+<div class="app">
+
+  <!-- ===================== 상단 ===================== -->
+  <header class="topbar">
+    <div class="topbar-main">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="#2eb872"/><text x="20" y="28" font-size="22" font-weight="800" text-anchor="middle" fill="#ffffff" font-family="sans-serif">ㅍ</text><circle cx="32" cy="8" r="4" fill="#ffcf3f"/></svg>
+        </div>
+        <div class="brand-txt">
+          <div class="brand-line">
+            <strong>AI 허브</strong>
+            <span class="livepill" id="livePill" title="연결 상태">
+              <span class="dot" id="liveDot"></span><span id="liveText">연결 확인 중</span>
+            </span>
+          </div>
+          <p class="brand-sub" id="brandSub">AI들이 일을 이어가고 있어요</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="refreshBtn" type="button" title="시트에서 새로고침" aria-label="새로고침">⟳</button>
+        <button class="ghost-btn" id="topSettingsBtn" type="button">설정</button>
+      </div>
+    </div>
+
+    <!-- AI 프로필 배지 -->
+    <div class="profiles" id="profiles" aria-label="참여 AI"></div>
+  </header>
+
+  <!-- ===================== 탭 ===================== -->
+  <nav class="tabs" role="tablist" aria-label="화면 전환">
+    <button class="tab active" role="tab" aria-selected="true" data-view="chat" type="button">
+      <span class="tab-ico" aria-hidden="true">💬</span><span class="tab-label">대화·결정</span><span class="tab-count" id="tabCountChat">–</span>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-view="board" type="button">
+      <span class="tab-ico" aria-hidden="true">📋</span><span class="tab-label">오더보드·토론로그</span><span class="tab-count" id="tabCountBoard">–</span>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-view="settings" type="button">
+      <span class="tab-ico" aria-hidden="true">⚙️</span><span class="tab-label">설정</span><span class="tab-count" id="tabCountSettings">–</span>
+    </button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ===================== 대화·결정 ===================== -->
+    <section class="view active" id="view-chat" role="tabpanel" aria-label="대화·결정">
+      <div class="chat-grid">
+        <div class="chat-col">
+
+          <!-- 지시 남기기 카드 -->
+          <section class="order-card" id="orderCard" aria-label="지시 남기기">
+            <div class="oc-head">
+              <h2 class="oc-title">지시 남기기</h2>
+              <span class="oc-route" id="ocRoute">데모 모드</span>
+            </div>
+            <div class="chips" id="chips" role="radiogroup" aria-label="대상 선택">
+              <button class="chip-target" type="button" data-target="모두에게" role="radio" aria-checked="true" data-on="1">
+                <span class="ct-ico">📣</span>모두에게
+              </button>
+              <button class="chip-target" type="button" data-target="피크리" role="radio" aria-checked="false">
+                <span class="ct-av" data-av="pikri"></span>피크리
+              </button>
+              <button class="chip-target" type="button" data-target="부이" role="radio" aria-checked="false">
+                <span class="ct-av" data-av="bui"></span>부이
+              </button>
+              <button class="chip-target" type="button" data-target="키링" role="radio" aria-checked="false">
+                <span class="ct-av" data-av="keyring"></span>키링
+              </button>
+              <button class="chip-target" type="button" data-target="뀨" role="radio" aria-checked="false">
+                <span class="ct-av" data-av="kkyu"></span>뀨
+              </button>
+            </div>
+            <div class="oc-field">
+              <textarea id="orderInput" rows="2" placeholder="예) 내일 아침에 인스타 카드뉴스 2건 초안 올리고 검수까지 해줘" aria-label="지시 내용"></textarea>
+            </div>
+            <div class="oc-foot">
+              <div class="oc-hint" id="ocHint">텔레그램 방 · 시트 오더보드 · 뀨 웹훅으로 나갑니다</div>
+              <button class="send-btn" id="orderSubmit" type="button">지시 남기기</button>
+            </div>
+            <div class="oc-result" id="ocResult" hidden></div>
+          </section>
+
+          <!-- 타임라인 -->
+          <div class="room-head">
+            <div class="room-title">
+              <span class="room-ico" aria-hidden="true">💬</span>
+              <div>
+                <strong>대화방</strong>
+                <span id="roomSub">피크리 · 부이 · 키링 · 뀨 · 방장</span>
+              </div>
+            </div>
+            <div class="room-tools">
+              <span class="room-note" id="roomNote"></span>
+              <button class="icon-btn" id="jumpBottom" type="button" title="맨 아래로" aria-label="맨 아래로">↓</button>
+            </div>
+          </div>
+
+          <div class="feed" id="feed" aria-live="polite"></div>
+
+          <!-- 하단 입력부 (대상 칩 + 전송) -->
+          <div class="composer">
+            <div class="chips mini" id="chipsMini" role="radiogroup" aria-label="대상 선택 (하단)">
+              <button class="chip-target" type="button" data-target="모두에게" role="radio" aria-checked="true"><span class="ct-ico">📣</span>모두에게</button>
+              <button class="chip-target" type="button" data-target="피크리" role="radio" aria-checked="false"><span class="ct-av" data-av="pikri"></span>피크리</button>
+              <button class="chip-target" type="button" data-target="부이" role="radio" aria-checked="false"><span class="ct-av" data-av="bui"></span>부이</button>
+              <button class="chip-target" type="button" data-target="키링" role="radio" aria-checked="false"><span class="ct-av" data-av="keyring"></span>키링</button>
+              <button class="chip-target" type="button" data-target="뀨" role="radio" aria-checked="false"><span class="ct-av" data-av="kkyu"></span>뀨</button>
+            </div>
+            <div class="inputrow">
+              <textarea id="quickInput" rows="1" placeholder="한 줄로 지시하기" aria-label="한 줄 지시"></textarea>
+              <button class="send-btn compact" id="quickSubmit" type="button" aria-label="지시 보내기">남기기</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 사이드 -->
+        <aside class="side" aria-label="현황">
+          <div class="card">
+            <h3 class="card-h">오더 현황</h3>
+            <div class="stat-row" id="orderStats"></div>
+            <button class="link-more" data-goto="board" type="button">오더보드 전체 보기 →</button>
+          </div>
+          <div class="card">
+            <h3 class="card-h">최근 결정</h3>
+            <ul class="decisions" id="decisionList"></ul>
+          </div>
+          <div class="card">
+            <h3 class="card-h">연결 상태</h3>
+            <ul class="conns" id="connList"></ul>
+            <p class="fine" id="connFine"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===================== 오더보드·토론로그 ===================== -->
+    <section class="view" id="view-board" role="tabpanel" aria-label="오더보드·토론로그">
+      <div class="page">
+        <div class="page-head">
+          <div>
+            <h2>오더보드 · 토론로그</h2>
+            <p class="page-sub" id="boardSub">구글 시트 <b>AI 비서 통합 오더 보드</b>를 그대로 읽어옵니다.</p>
+          </div>
+          <div class="page-tools">
+            <div class="seg" id="viewToggle" role="group" aria-label="보기 방식">
+              <button class="seg-btn active" data-layout="card" type="button">카드</button>
+              <button class="seg-btn" data-layout="table" type="button">표</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="filters" id="boardFilters">
+          <button class="filter active" data-filter="all" type="button">전체 <b>–</b></button>
+          <button class="filter" data-filter="진행중" type="button">진행중 <b>–</b></button>
+          <button class="filter" data-filter="검수완료" type="button">검수완료 <b>–</b></button>
+          <button class="filter" data-filter="확정" type="button">확정 <b>–</b></button>
+          <button class="filter" data-filter="대기" type="button">대기 <b>–</b></button>
+          <div class="filter-search">
+            <input id="boardSearch" type="search" placeholder="오더 내용 · AI 의견 검색" aria-label="오더 검색" />
+          </div>
+        </div>
+
+        <div class="orders card-layout" id="orderList"></div>
+        <div class="table-wrap" id="orderTableWrap" hidden>
+          <table class="cmp orders-table">
+            <thead>
+              <tr><th>ID</th><th>등록</th><th>오더 내용</th><th>담당</th><th>상태</th><th>의견</th><th>결론</th></tr>
+            </thead>
+            <tbody id="orderTableBody"></tbody>
+          </table>
+        </div>
+
+        <h3 class="sec-h">🔥 토론로그 <span class="sec-sub">AI들이 서로 교차확인·반론·보완한 기록</span></h3>
+        <div class="threads" id="threadList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== 설정 ===================== -->
+    <section class="view" id="view-settings" role="tabpanel" aria-label="설정">
+      <div class="page narrow">
+        <div class="page-head">
+          <div>
+            <h2>설정</h2>
+            <p class="page-sub">연결 상태를 확인하고, 이 브라우저에서만 쓰는 비밀값을 넣을 수 있습니다.</p>
+          </div>
+        </div>
+
+        <div class="card block" id="settingsStatus">
+          <h3 class="card-h">연결 상태</h3>
+          <div id="serverStatus" class="kv"></div>
+          <div class="row-actions">
+            <button class="ghost-btn" id="verifyBtn" type="button">텔레그램 자격 확인</button>
+            <button class="ghost-btn" id="refreshBtn2" type="button">시트 새로고침</button>
+          </div>
+          <p class="fine" id="verifyResult"></p>
+        </div>
+
+        <div class="card block">
+          <h3 class="card-h">브라우저 로컬 설정 <span class="tag-local">이 브라우저에만 저장</span></h3>
+          <p class="fine">
+            여기에 넣은 봇 토큰·방 ID로 이 브라우저가 텔레그램에 직접 보냅니다.
+            값은 이 브라우저의 <code>localStorage</code>에만 남고 어디로도 업로드되지 않습니다.
+          </p>
+          <label class="field">
+            <span>텔레그램 봇 토큰</span>
+            <input id="localToken" type="password" autocomplete="off" placeholder="1234567890:AAH… (비워두면 저장 안 함)" />
+          </label>
+          <label class="field">
+            <span>텔레그램 방 ID</span>
+            <input id="localChat" type="text" inputmode="numeric" autocomplete="off" placeholder="-100…" />
+          </label>
+          <div class="row-actions">
+            <button class="ghost-btn primary" id="saveLocal" type="button">저장</button>
+            <button class="ghost-btn" id="clearLocal" type="button">지우기</button>
+            <button class="ghost-btn" id="testLocal" type="button">이 브라우저에서 바로 보내기</button>
+          </div>
+          <p class="fine warn">
+            ⚠️ 이 버전은 텔레그램 전송만 됩니다. 구글 시트 기록·뀨 웹훅은 서버(<code>server.py</code>)가 필요합니다.
+          </p>
+        </div>
+
+        <div class="card block">
+          <h3 class="card-h">홈 화면에 추가</h3>
+          <pre class="code">삼성 인터넷 : 메뉴(≡) → 홈 화면에 추가
+크롬        : ⋮ → 앱 설치 / 홈 화면에 추가</pre>
+          <p class="fine">
+            추가하면 주소창 없이 <b>단독 앱</b>으로 열립니다. 화면은 마지막으로 받은 스냅샷을 함께 저장해 두어
+            잠깐 인터넷이 끊겨도 보입니다. 새 내용은 사이트를 새로 열 때 반영됩니다.
+          </p>
+        </div>
+
+        <div class="card block">
+          <h3 class="card-h">보안 체크리스트</h3>
+          <ul class="checklist">
+            <li>봇 토큰·웹훅 URL을 <b>index.html · app.js · server.py</b>에 하드코딩하지 않는다</li>
+            <li>서버는 기본 <code>127.0.0.1</code> 바인딩. 외부 공개 시 <code>AIHUB_ACCESS_KEY</code>를 켠다</li>
+            <li>토큰은 응답·로그·저장 파일에 평문으로 나가지 않는다 (설정 여부만 표시)</li>
+            <li>시트 공유는 계정 단독 비공개 유지 — 링크 공개 금지</li>
+            <li>기본은 데모(dry-run). 실제 전송은 <code>--live</code>로 명시할 때만</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="lock.js"></script>
+</body>
+</html>
