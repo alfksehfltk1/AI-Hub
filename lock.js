@@ -23,12 +23,23 @@
     booted = true;
     const lock = $("#lock");
     if (lock) lock.hidden = true;
-    const s = document.createElement("script");
-    s.src = "app.js";
-    s.defer = true;
-    document.body.appendChild(s);
+    // 화면 코드: 오더보드(app.js) → 실시간 단톡방(room.js)
+    ["app.js", "room.js"].forEach((src) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.defer = true;
+      document.body.appendChild(s);
+    });
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").catch(() => { /* file:// 등록 불가 환경은 무시 */ });
+      navigator.serviceWorker.register("sw.js").then((reg) => {
+        // 새 버전이 있으면 바로 활성화를 요청한다
+        reg.addEventListener("updatefound", () => {
+          const w = reg.installing;
+          if (w) w.addEventListener("statechange", () => {
+            if (w.state === "installed") w.postMessage("skip-waiting");
+          });
+        });
+      }).catch(() => { /* file:// 등록 불가 환경은 무시 */ });
     }
   }
 

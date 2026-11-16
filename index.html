@@ -48,12 +48,12 @@
               <span class="dot" id="liveDot"></span><span id="liveText">연결 확인 중</span>
             </span>
           </div>
-          <p class="brand-sub" id="brandSub">AI들이 일을 이어가고 있어요</p>
+          <p class="brand-sub" id="brandSub">AI들이 실시간으로 답합니다</p>
         </div>
       </div>
 
       <div class="topbar-actions">
-        <button class="icon-btn" id="refreshBtn" type="button" title="시트에서 새로고침" aria-label="새로고침">⟳</button>
+        <button class="icon-btn" id="refreshBtn" type="button" title="오더보드 새로고침" aria-label="새로고침">⟳</button>
         <button class="ghost-btn" id="topSettingsBtn" type="button">설정</button>
       </div>
     </div>
@@ -65,10 +65,10 @@
   <!-- ===================== 탭 ===================== -->
   <nav class="tabs" role="tablist" aria-label="화면 전환">
     <button class="tab active" role="tab" aria-selected="true" data-view="chat" type="button">
-      <span class="tab-ico" aria-hidden="true">💬</span><span class="tab-label">대화·결정</span><span class="tab-count" id="tabCountChat">–</span>
+      <span class="tab-ico" aria-hidden="true">💬</span><span class="tab-label">단톡방</span><span class="tab-count" id="tabCountChat">–</span>
     </button>
     <button class="tab" role="tab" aria-selected="false" data-view="board" type="button">
-      <span class="tab-ico" aria-hidden="true">📋</span><span class="tab-label">오더보드·토론로그</span><span class="tab-count" id="tabCountBoard">–</span>
+      <span class="tab-ico" aria-hidden="true">📋</span><span class="tab-label">오더보드·토론</span><span class="tab-count" id="tabCountBoard">–</span>
     </button>
     <button class="tab" role="tab" aria-selected="false" data-view="settings" type="button">
       <span class="tab-ico" aria-hidden="true">⚙️</span><span class="tab-label">설정</span><span class="tab-count" id="tabCountSettings">–</span>
@@ -77,94 +77,44 @@
 
   <main class="main">
 
-    <!-- ===================== 대화·결정 ===================== -->
-    <section class="view active" id="view-chat" role="tabpanel" aria-label="대화·결정">
-      <div class="chat-grid">
-        <div class="chat-col">
+    <!-- ===================== 단톡방 ===================== -->
+    <section class="view active" id="view-chat" role="tabpanel" aria-label="AI 단톡방">
+      <div class="room">
 
-          <!-- 지시 남기기 카드 -->
-          <section class="order-card" id="orderCard" aria-label="지시 남기기">
-            <div class="oc-head">
-              <h2 class="oc-title">지시 남기기</h2>
-              <span class="oc-route" id="ocRoute">데모 모드</span>
-            </div>
-            <div class="chips" id="chips" role="radiogroup" aria-label="대상 선택">
-              <button class="chip-target" type="button" data-target="모두에게" role="radio" aria-checked="true" data-on="1">
-                <span class="ct-ico">📣</span>모두에게
-              </button>
-              <button class="chip-target" type="button" data-target="피크리" role="radio" aria-checked="false">
-                <span class="ct-av" data-av="pikri"></span>피크리
-              </button>
-              <button class="chip-target" type="button" data-target="부이" role="radio" aria-checked="false">
-                <span class="ct-av" data-av="bui"></span>부이
-              </button>
-              <button class="chip-target" type="button" data-target="키링" role="radio" aria-checked="false">
-                <span class="ct-av" data-av="keyring"></span>키링
-              </button>
-              <button class="chip-target" type="button" data-target="뀨" role="radio" aria-checked="false">
-                <span class="ct-av" data-av="kkyu"></span>뀨
-              </button>
-            </div>
-            <div class="oc-field">
-              <textarea id="orderInput" rows="2" placeholder="예) 내일 아침에 인스타 카드뉴스 2건 초안 올리고 검수까지 해줘" aria-label="지시 내용"></textarea>
-            </div>
-            <div class="oc-foot">
-              <div class="oc-hint" id="ocHint">텔레그램 방 · 시트 오더보드 · 뀨 웹훅으로 나갑니다</div>
-              <button class="send-btn" id="orderSubmit" type="button">지시 남기기</button>
-            </div>
-            <div class="oc-result" id="ocResult" hidden></div>
-          </section>
-
-          <!-- 타임라인 -->
-          <div class="room-head">
-            <div class="room-title">
-              <span class="room-ico" aria-hidden="true">💬</span>
-              <div>
-                <strong>대화방</strong>
-                <span id="roomSub">피크리 · 부이 · 키링 · 뀨 · 방장</span>
-              </div>
-            </div>
-            <div class="room-tools">
-              <span class="room-note" id="roomNote"></span>
-              <button class="icon-btn" id="jumpBottom" type="button" title="맨 아래로" aria-label="맨 아래로">↓</button>
+        <div class="room-bar">
+          <div class="room-title">
+            <span class="room-ico" aria-hidden="true">💬</span>
+            <div class="room-tt">
+              <strong>AI 단톡방</strong>
+              <span id="roomSub">피크리 · 부이 · 키링 · 뀨 · 방장</span>
             </div>
           </div>
-
-          <div class="feed" id="feed" aria-live="polite"></div>
-
-          <!-- 하단 입력부 (대상 칩 + 전송) -->
-          <div class="composer">
-            <div class="chips mini" id="chipsMini" role="radiogroup" aria-label="대상 선택 (하단)">
-              <button class="chip-target" type="button" data-target="모두에게" role="radio" aria-checked="true"><span class="ct-ico">📣</span>모두에게</button>
-              <button class="chip-target" type="button" data-target="피크리" role="radio" aria-checked="false"><span class="ct-av" data-av="pikri"></span>피크리</button>
-              <button class="chip-target" type="button" data-target="부이" role="radio" aria-checked="false"><span class="ct-av" data-av="bui"></span>부이</button>
-              <button class="chip-target" type="button" data-target="키링" role="radio" aria-checked="false"><span class="ct-av" data-av="keyring"></span>키링</button>
-              <button class="chip-target" type="button" data-target="뀨" role="radio" aria-checked="false"><span class="ct-av" data-av="kkyu"></span>뀨</button>
-            </div>
-            <div class="inputrow">
-              <textarea id="quickInput" rows="1" placeholder="한 줄로 지시하기" aria-label="한 줄 지시"></textarea>
-              <button class="send-btn compact" id="quickSubmit" type="button" aria-label="지시 보내기">남기기</button>
-            </div>
+          <div class="room-tools">
+            <span class="engine-pill" id="enginePill">Gemini 키 없음</span>
+            <span class="round-pill" id="roundPill" hidden></span>
+            <button class="icon-btn" id="jumpBottom" type="button" title="맨 아래로" aria-label="맨 아래로">↓</button>
           </div>
         </div>
 
-        <!-- 사이드 -->
-        <aside class="side" aria-label="현황">
-          <div class="card">
-            <h3 class="card-h">오더 현황</h3>
-            <div class="stat-row" id="orderStats"></div>
-            <button class="link-more" data-goto="board" type="button">오더보드 전체 보기 →</button>
+        <div class="room-feed" id="roomFeed" aria-live="polite" aria-label="대화 타임라인"></div>
+
+        <!-- 하단 고정 입력: 대상 칩 + 입력 + 전송 -->
+        <form class="room-composer" id="composerForm" autocomplete="off">
+          <div class="chips mini" id="chipsMini" role="radiogroup" aria-label="대상 선택">
+            <button class="chip-target" type="button" data-target="모두에게" role="radio" aria-checked="true"><span class="ct-ico">📣</span>모두에게</button>
+            <button class="chip-target" type="button" data-target="피크리" role="radio" aria-checked="false"><span class="ct-av" data-av="pikri"></span>피크리</button>
+            <button class="chip-target" type="button" data-target="부이" role="radio" aria-checked="false"><span class="ct-av" data-av="bui"></span>부이</button>
+            <button class="chip-target" type="button" data-target="키링" role="radio" aria-checked="false"><span class="ct-av" data-av="keyring"></span>키링</button>
+            <button class="chip-target" type="button" data-target="뀨" role="radio" aria-checked="false"><span class="ct-av" data-av="kkyu"></span>뀨</button>
           </div>
-          <div class="card">
-            <h3 class="card-h">최근 결정</h3>
-            <ul class="decisions" id="decisionList"></ul>
+          <div class="inputrow">
+            <textarea id="roomInput" rows="1" placeholder="방장님, 한마디 던져 보세요 (@부이 처럼 부르면 그 AI만 답합니다)" aria-label="메시지 입력"></textarea>
+            <button class="send-btn" id="roomSend" type="button" aria-label="보내기">전송</button>
           </div>
-          <div class="card">
-            <h3 class="card-h">연결 상태</h3>
-            <ul class="conns" id="connList"></ul>
-            <p class="fine" id="connFine"></p>
+          <div class="composer-foot">
+            <span class="fine" id="sendHint">설정에서 Gemini 키를 넣으면 4명이 바로 답합니다</span>
           </div>
-        </aside>
+        </form>
       </div>
     </section>
 
@@ -216,25 +166,41 @@
         <div class="page-head">
           <div>
             <h2>설정</h2>
-            <p class="page-sub">연결 상태를 확인하고, 이 브라우저에서만 쓰는 비밀값을 넣을 수 있습니다.</p>
+            <p class="page-sub">실시간 엔진과 연결 상태를 여기서 관리합니다. 비밀값은 이 브라우저에만 저장됩니다.</p>
           </div>
         </div>
 
-        <div class="card block" id="settingsStatus">
-          <h3 class="card-h">연결 상태</h3>
-          <div id="serverStatus" class="kv"></div>
-          <div class="row-actions">
-            <button class="ghost-btn" id="verifyBtn" type="button">텔레그램 자격 확인</button>
-            <button class="ghost-btn" id="refreshBtn2" type="button">시트 새로고침</button>
-          </div>
-          <p class="fine" id="verifyResult"></p>
-        </div>
-
-        <div class="card block">
-          <h3 class="card-h">브라우저 로컬 설정 <span class="tag-local">이 브라우저에만 저장</span></h3>
+        <!-- Gemini 실시간 엔진 -->
+        <div class="card block" id="geminiCard">
+          <h3 class="card-h">실시간 AI 단톡방 · Gemini <span class="tag-local">이 브라우저에만 저장</span></h3>
           <p class="fine">
-            여기에 넣은 봇 토큰·방 ID로 이 브라우저가 텔레그램에 직접 보냅니다.
-            값은 이 브라우저의 <code>localStorage</code>에만 남고 어디로도 업로드되지 않습니다.
+            API 키를 넣으면 단톡방에서 부이 → 키링 → 뀨 → 피크리가 <b>실시간으로 이어서</b> 답합니다.
+            키는 이 브라우저의 <code>localStorage</code>에만 남고, 코드·GitHub 저장소에는 절대 저장하지 않습니다.
+            키 발급: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a>
+          </p>
+          <label class="field">
+            <span>Gemini API 키 <b class="state" id="geminiKeyState">없음</b></span>
+            <input id="geminiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AQ.… 또는 AIza…" />
+          </label>
+          <label class="field">
+            <span>모델 <b class="state" id="geminiModelState">—</b></span>
+            <input id="geminiModel" type="text" list="geminiModelList" autocomplete="off" spellcheck="false" placeholder="gemini-3.5-flash-lite" />
+            <datalist id="geminiModelList"></datalist>
+          </label>
+          <div class="row-actions">
+            <button class="ghost-btn primary" id="saveGemini" type="button">저장</button>
+            <button class="ghost-btn" id="loadModels" type="button">모델 목록 불러오기</button>
+            <button class="ghost-btn" id="testGemini" type="button">연결 테스트</button>
+            <button class="ghost-btn" id="clearGemini" type="button">키 지우기</button>
+          </div>
+          <p class="fine" id="geminiResult">빠른 모델: gemini-3.5-flash-lite · gemini-3.1-flash-lite (1초 내 응답)</p>
+        </div>
+
+        <!-- 텔레그램 미러 -->
+        <div class="card block">
+          <h3 class="card-h">텔레그램 연동 (선택) <span class="tag-local">이 브라우저에만 저장</span></h3>
+          <p class="fine">
+            봇 토큰과 방 ID를 넣으면 단톡방 대화를 텔레그램 방으로도 보낼 수 있습니다.
           </p>
           <label class="field">
             <span>텔레그램 봇 토큰</span>
@@ -244,14 +210,47 @@
             <span>텔레그램 방 ID</span>
             <input id="localChat" type="text" inputmode="numeric" autocomplete="off" placeholder="-100…" />
           </label>
+          <label class="switch">
+            <input id="tgMirror" type="checkbox" />
+            <span>단톡방 대화를 텔레그램에도 보내기</span>
+          </label>
           <div class="row-actions">
             <button class="ghost-btn primary" id="saveLocal" type="button">저장</button>
             <button class="ghost-btn" id="clearLocal" type="button">지우기</button>
-            <button class="ghost-btn" id="testLocal" type="button">이 브라우저에서 바로 보내기</button>
+            <button class="ghost-btn" id="verifyBtn" type="button">텔레그램 자격 확인</button>
           </div>
-          <p class="fine warn">
-            ⚠️ 이 버전은 텔레그램 전송만 됩니다. 구글 시트 기록·뀨 웹훅은 서버(<code>server.py</code>)가 필요합니다.
-          </p>
+          <p class="fine" id="verifyResult"></p>
+        </div>
+
+        <!-- 대화 기록 -->
+        <div class="card block">
+          <h3 class="card-h">대화 기록</h3>
+          <p class="fine" id="roomHistoryInfo">저장된 메시지 0개 · 이 브라우저에만 남습니다</p>
+          <div class="row-actions">
+            <button class="ghost-btn" id="roomExport" type="button">기록 복사</button>
+            <button class="ghost-btn" id="roomReset" type="button">대화 초기화</button>
+          </div>
+          <p class="fine">새로고침해도 대화는 이어집니다. 초기화해도 오더보드·시트는 그대로입니다.</p>
+        </div>
+
+        <!-- 연결 상태 -->
+        <div class="card block" id="settingsStatus">
+          <h3 class="card-h">연결 상태</h3>
+          <div id="serverStatus" class="kv"></div>
+          <div class="row-actions">
+            <button class="ghost-btn" id="refreshBtn2" type="button">오더보드 새로고침</button>
+          </div>
+        </div>
+
+        <div class="card block">
+          <h3 class="card-h">보안 체크리스트</h3>
+          <ul class="checklist">
+            <li>Gemini API 키·봇 토큰은 <b>index.html · app.js · room.js</b>에 절대 넣지 않는다 — 브라우저 <code>localStorage</code>에만</li>
+            <li>공개 저장소(alfksehfltk1/AI-Hub)에는 스냅샷을 <b>AES-GCM</b>으로 암호화해 올린다 (PIN 없이는 못 읽음)</li>
+            <li>앱은 PIN 잠금 뒤에 열린다 — 폰을 잠깐 빌려줘도 대화·오더가 보이지 않는다</li>
+            <li>API 키는 브라우저에서만 쓰이고, 화면·로그·저장 파일에 평문으로 남기지 않는다</li>
+            <li>텔레그램 미러는 켤 때만 전송한다 (기본 꺼짐)</li>
+          </ul>
         </div>
 
         <div class="card block">
@@ -260,19 +259,8 @@
 크롬        : ⋮ → 앱 설치 / 홈 화면에 추가</pre>
           <p class="fine">
             추가하면 주소창 없이 <b>단독 앱</b>으로 열립니다. 화면은 마지막으로 받은 스냅샷을 함께 저장해 두어
-            잠깐 인터넷이 끊겨도 보입니다. 새 내용은 사이트를 새로 열 때 반영됩니다.
+            잠깐 인터넷이 끊겨도 보입니다.
           </p>
-        </div>
-
-        <div class="card block">
-          <h3 class="card-h">보안 체크리스트</h3>
-          <ul class="checklist">
-            <li>봇 토큰·웹훅 URL을 <b>index.html · app.js · server.py</b>에 하드코딩하지 않는다</li>
-            <li>서버는 기본 <code>127.0.0.1</code> 바인딩. 외부 공개 시 <code>AIHUB_ACCESS_KEY</code>를 켠다</li>
-            <li>토큰은 응답·로그·저장 파일에 평문으로 나가지 않는다 (설정 여부만 표시)</li>
-            <li>시트 공유는 계정 단독 비공개 유지 — 링크 공개 금지</li>
-            <li>기본은 데모(dry-run). 실제 전송은 <code>--live</code>로 명시할 때만</li>
-          </ul>
         </div>
       </div>
     </section>

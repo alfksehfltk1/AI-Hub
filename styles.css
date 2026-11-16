@@ -513,6 +513,143 @@ code{font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;font-siz
 }
 
 /* =========================================================
+   단톡방 (v3) — 카톡형 말풍선 타임라인 + 하단 고정 입력
+   ========================================================= */
+.room{height:100%;display:flex;flex-direction:column;min-height:0;background:#f6f5f0}
+.room-bar{
+  flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 14px;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);
+  border-bottom:1px solid #e9e5da;z-index:5;
+}
+.room-title{display:flex;align-items:center;gap:8px;min-width:0}
+.room-ico{font-size:15px}
+.room-tt strong{display:block;font-size:13.5px;letter-spacing:-.2px;line-height:1.25}
+.room-tt span{display:block;font-size:10.5px;color:#8b887d;margin-top:1px}
+.room-tools{display:flex;align-items:center;gap:6px;min-width:0}
+.engine-pill{
+  font-size:9.5px;font-weight:800;color:#8b887d;background:#efede5;border:1px solid #e5e1d6;
+  border-radius:999px;padding:3px 9px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.engine-pill.on{color:#12804c;background:#e6f8ee;border-color:#c3ecd7}
+.round-pill{font-size:9.5px;font-weight:800;color:#8a6400;background:#fff0c2;border-radius:999px;padding:3px 8px;white-space:nowrap}
+#jumpBottom{opacity:0;pointer-events:none;transition:opacity .18s}
+#jumpBottom.show{opacity:1;pointer-events:auto}
+
+.room-feed{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:13px 12px 8px}
+.room-feed::-webkit-scrollbar{width:8px}
+.room-feed::-webkit-scrollbar-thumb{background:rgba(140,136,124,.3);border-radius:8px}
+.bfeed-inner{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.room-empty{text-align:center;color:#a8a498;font-size:12px;padding:36px 10px}
+
+/* 말풍선 */
+.bmsg{display:flex;gap:8px;align-items:flex-start;animation:rise .22s ease both}
+.bmsg .bav{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;box-shadow:0 1px 2px rgba(30,30,20,.12);background:#fff}
+.bmsg .bav svg{display:block;width:100%;height:100%}
+.bbody{min-width:0;max-width:calc(100% - 48px);display:flex;flex-direction:column;align-items:flex-start}
+.bhead{display:flex;align-items:center;gap:5px;margin:0 0 4px 2px;flex-wrap:wrap}
+.bname{font-size:12.5px;font-weight:800;color:#33332c;letter-spacing:-.2px}
+.bbadge{
+  font-size:9px;font-weight:800;letter-spacing:.1px;border-radius:5px;padding:1px 5px;line-height:1.4;
+  background:#ecebf4;color:#655f83;border:1px solid #e0deec;
+}
+.bbadge.owner{background:var(--green-soft);color:var(--green-ink);border-color:#c9eeda}
+.bbadge.admin{background:#fff4dc;color:#9a6a00;border-color:#ffe0a3}
+.bbadge.warn{background:#fdecec;color:#a32f2a;border-color:#f6cfcf}
+
+.bcall{
+  display:inline-flex;align-items:center;gap:4px;margin:0 0 5px;font-size:9.5px;font-weight:800;
+  color:#8a6400;background:#fff0c2;border:1px solid #ffdc7a;border-radius:7px;padding:2px 8px;letter-spacing:-.1px;
+}
+.bcall.allsoft{color:#9c8d63;background:#faf4e2;border-color:#eee3c4}
+.bcall.me{color:#6b5a00;background:#fff6bf;border-color:#ffe97a}
+
+.bbub{
+  background:#fff;border-radius:16px;padding:10px 13px;font-size:13.6px;line-height:1.62;color:#2c2c26;
+  box-shadow:0 1px 1px rgba(30,30,20,.06);word-break:break-word;white-space:pre-wrap;max-width:100%;
+}
+.bmsg.called .bbub{border:2px solid #ffc93c;background:#fffdf3;box-shadow:0 2px 12px rgba(255,201,60,.24);padding:9px 12px}
+.bmsg.err .bbub{background:#fdf2f2;border:1px solid #f2c9c9;color:#8a2f2f;font-size:12.5px}
+.bbub b{font-weight:800}
+.ghost{color:#cfcabb}
+
+.bmsg.me{align-self:flex-end;flex-direction:row-reverse}
+.bmsg.me .bbody{align-items:flex-end;max-width:84%}
+.bmsg.me .bhead{margin:0 2px 4px 0}
+.bmsg.me .bbub{background:#fee500;color:#3d3100;border-radius:16px 4px 16px 16px;box-shadow:0 1px 1px rgba(150,120,0,.16)}
+.bmsg.me .bfoot{justify-content:flex-end}
+.bbub .mention{font-weight:800;color:#1d6fe0;background:rgba(47,123,246,.09);border-radius:5px;padding:0 3px}
+.bmsg.me .bbub .mention{color:#6b5300;background:rgba(255,255,255,.55)}
+
+.bfoot{display:flex;align-items:center;gap:6px;margin:3px 2px 0;font-size:9.5px;color:#a19d90;flex-wrap:wrap}
+.bfoot .bspd{color:#b7b2a3}
+.bfoot .mini-link{border:0;background:transparent;color:#2f6bff;font-size:9.5px;font-weight:800;padding:0}
+
+.thin-dots{display:inline-flex;gap:2px;margin-left:1px;align-items:center}
+.thin-dots i{width:4px;height:4px;border-radius:50%;background:#cec9b8;animation:blink 1s infinite}
+.thin-dots i:nth-child(2){animation-delay:.15s}
+.thin-dots i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+
+.sysline{display:flex;justify-content:center;margin:2px 0}
+.sysline span{
+  font-size:10.5px;line-height:1.5;color:#807d72;background:rgba(255,255,255,.8);
+  border-radius:999px;padding:5px 12px;text-align:center;
+}
+.room-feed .daydiv span{background:rgba(255,255,255,.82);color:#6f6c62;box-shadow:none;border:1px solid rgba(0,0,0,.03)}
+
+/* 하단 고정 입력 */
+.room-composer{
+  flex:none;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);
+  border-top:1px solid #e9e5da;padding:7px 12px calc(8px + env(safe-area-inset-bottom));
+}
+.room-composer .chips{margin:0 auto 6px;max-width:720px}
+.room-composer .chip-target{padding:3px 9px 3px 7px;font-size:11px;gap:4px;border-color:#e5e1d6;background:#fbfaf6}
+.room-composer .chip-target .ct-av{width:15px;height:15px;border-radius:5px}
+.room-composer .inputrow{display:flex;align-items:flex-end;gap:7px;max-width:720px;margin:0 auto}
+#roomInput{
+  flex:1;min-width:0;min-height:42px;max-height:132px;border:1px solid #e5e1d6;background:#f8f7f2;
+  border-radius:14px;padding:11px 13px;font-size:13.4px;line-height:1.5;resize:none;
+}
+#roomInput:focus{outline:none;border-color:#b9d1f7;background:#fff;box-shadow:0 0 0 3px rgba(47,123,246,.1)}
+#roomInput:disabled{opacity:.6}
+.room-composer .send-btn{border-radius:14px;padding:0 16px;height:42px;font-size:13px}
+.room-composer .send-btn.stop{background:#d9534f;box-shadow:0 4px 12px rgba(217,83,79,.24)}
+.composer-foot{max-width:720px;margin:5px auto 0;display:flex;justify-content:flex-end}
+.composer-foot .fine{margin:0;font-size:9.5px;color:#a8a498}
+
+/* 설정 추가분 */
+.field .state{font-size:9px;font-weight:800;color:#12804c;background:#e6f8ee;border-radius:5px;padding:1px 6px;margin-left:4px;vertical-align:1px}
+.switch{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:700;color:#3c4a5c}
+.switch input{width:16px;height:16px;accent-color:#2f7bf6;flex:none}
+.switch span{line-height:1.4}
+#geminiResult{font-size:10.5px;line-height:1.6;color:#7a8899;margin-top:9px;word-break:break-word}
+#geminiResult.err{color:#a32f2a}
+.field input[list]{background:#f8fafd}
+#geminiCard a{color:#1d5fd0;font-weight:700}
+
+@media (max-width:640px){
+  .room-bar{padding:7px 11px}
+  .room-tt strong{font-size:12.5px}
+  .room-tt span{font-size:10px}
+  .engine-pill{max-width:118px;font-size:9px;padding:2px 7px}
+  .round-pill{font-size:9px;padding:2px 6px}
+  .room-feed{padding:10px 9px 6px}
+  .bfeed-inner{gap:12px}
+  .bmsg .bav{width:34px;height:34px}
+  .bbody{max-width:calc(100% - 42px)}
+  .bbub{font-size:13.1px;padding:9px 12px}
+  .room-composer{padding:6px 9px calc(7px + env(safe-area-inset-bottom))}
+  #roomInput{font-size:16px;min-height:40px;padding:9px 12px}
+  .room-composer .send-btn{height:40px;padding:0 14px;font-size:12.5px}
+  .composer-foot .fine{font-size:9px}
+}
+@media (max-width:430px){
+  .room-composer .chip-target{padding:3px 8px 3px 6px;font-size:10.5px}
+  .room-composer .chip-target .ct-av{width:14px;height:14px}
+  .engine-pill{max-width:96px}
+}
+
+/* =========================================================
    PWA · 잠금 화면 (정적 배포판에서만 붙습니다)
    ========================================================= */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
