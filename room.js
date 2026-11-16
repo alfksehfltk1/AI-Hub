@@ -234,7 +234,7 @@
     return {
       systemInstruction: { parts: [{ text: `${AI[aiKey].persona}\n\n${RULES}` }] },
       contents: [{ role: "user", parts: [{ text: parts.join("\n") }] }],
-      generationConfig: { temperature: 0.95, maxOutputTokens: 2048 }, // 생각(thinking) 토큰 포함
+      generationConfig: { temperature: 0.95, maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: "low" } }, // 생각(thinking) 토큰 포함
     };
   }
 
@@ -246,7 +246,10 @@
   function mapHttp(status, body, model) {
     const msg = (body && body.error && body.error.message) || "";
     const code = (body && body.error && body.error.status) || "";
-    if (status === 400 || /API key not valid|INVALID_ARGUMENT/i.test(msg + code)) {
+    if (status === 400 && /thinking/i.test(msg)) {
+      return new GemErr("http", `이 모델은 thinking 설정을 지원하지 않습니다. (${msg})`);
+    }
+    if (status === 400 || /API key not valid|API_KEY_INVALID/i.test(msg + code)) {
       return new GemErr("key", `API 키가 올바르지 않습니다. 설정 → Gemini API 키를 다시 확인해 주세요. (${msg || "400"})`);
     }
     if (status === 403 || /PERMISSION_DENIED/i.test(msg + code)) {
@@ -267,7 +270,21 @@
     return new GemErr("http", `Gemini 호출 실패(${status}) ${msg}`.trim());
   }
 
-  async function streamGemini({ model, key, payload, onDelta, signal }) {
+  async function streamGemini(opts) {
+    try {
+      return await streamOnce(opts);
+    } catch (err) {
+      // thinking 설정을 모르는 모델이면 빼고 한 번 더 시도한다
+      if (err && err.kind === "http" && /thinking/i.test(String(err.message))) {
+        const p = JSON.parse(JSON.stringify(opts.payload));
+        if (p.generationConfig) delete p.generationConfig.thinkingConfig;
+        return await streamOnce(Object.assign({}, opts, { payload: p }));
+      }
+      throw err;
+    }
+  }
+
+  async function streamOnce({ model, key, payload, onDelta, signal }) {
     const url = `${ENDPOINT}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(key)}`;
     let res;
     try {
@@ -692,7 +709,7 @@
         payload: {
           systemInstruction: { parts: [{ text: "너는 테스트 응답기다. 한국어 한 문장으로만 답한다." }] },
           contents: [{ role: "user", parts: [{ text: "연결 확인. 준비됐다고 한 문장으로 답해줘." }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+          generationConfig: { temperature: 0.2, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "low" } },
         },
         onDelta: () => {},
       });
