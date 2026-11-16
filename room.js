@@ -234,7 +234,7 @@
     return {
       systemInstruction: { parts: [{ text: `${AI[aiKey].persona}\n\n${RULES}` }] },
       contents: [{ role: "user", parts: [{ text: parts.join("\n") }] }],
-      generationConfig: { temperature: 0.95, maxOutputTokens: 1200 },
+      generationConfig: { temperature: 0.95, maxOutputTokens: 2048 }, // 생각(thinking) 토큰 포함
     };
   }
 
@@ -323,7 +323,7 @@
             }
           }
           if (cand.finishReason && /MAX_TOKENS/.test(cand.finishReason) && !out.trim()) {
-            throw new GemErr("empty", "응답이 비었습니다(토큰 한도). 모델을 바꿔 보세요.");
+            throw new GemErr("empty", "모델이 생각만 하다 끝났어요(토큰 한도). 다시 보내거나 다른 모델을 골라 주세요.");
           }
         }
       }
@@ -450,7 +450,7 @@
     if (sendHint) {
       sendHint.textContent = hasKey
         ? `Enter 전송 · ${state.settings.model}`
-        : "설정에서 Gemini 키를 넣으면 4명이 바로 답합니다";
+        : "설정에서 Gemini 키를 넣으면 6명이 바로 답합니다";
     }
     const keyState = $("#geminiKeyState");
     if (keyState) keyState.textContent = hasKey ? "저장됨" : "없음";
@@ -692,7 +692,7 @@
         payload: {
           systemInstruction: { parts: [{ text: "너는 테스트 응답기다. 한국어 한 문장으로만 답한다." }] },
           contents: [{ role: "user", parts: [{ text: "연결 확인. 준비됐다고 한 문장으로 답해줘." }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 200 },
+          generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
         },
         onDelta: () => {},
       });
