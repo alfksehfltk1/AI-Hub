@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>월세·고정비 계산기 (1인 가구 & 소상공인)</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #16a34a;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px 16px;
+      letter-spacing: -0.02em;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+      padding: 28px 24px;
+    }
+    header { text-align: center; margin-bottom: 28px; }
+    h1 { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: var(--text-muted); }
+
+    .section { margin-bottom: 28px; }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+    .input-label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #334155;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .input-text {
+      flex: 1;
+      padding: 11px 14px;
+      font-size: 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      text-align: right;
+      transition: border-color 0.2s;
+    }
+    .input-text:focus { border-color: var(--primary); }
+    .unit { font-size: 14px; color: var(--text-muted); min-width: 18px; }
+    .select-period {
+      padding: 11px 8px;
+      font-size: 13.5px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      outline: none;
+      cursor: pointer;
+    }
+    .btn-del {
+      padding: 8px 10px;
+      border: 1px solid #fee2e2;
+      background: #fff5f5;
+      color: var(--danger);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .korean-unit {
+      font-size: 12px;
+      color: #2563eb;
+      text-align: right;
+      margin-top: 2px;
+      min-height: 16px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 9px 14px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-action:hover { background: #f8fafc; }
+
+    /* Results */
+    .result-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 24px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-label { font-size: 12.5px; color: var(--text-muted); margin-bottom: 4px; }
+    .stat-val { font-size: 18px; font-weight: 800; color: #0f172a; }
+    .stat-val.primary { color: var(--primary); }
+    .stat-val.danger { color: var(--danger); }
+    .stat-val.success { color: var(--success); }
+
+    .progress-bar-wrap {
+      background: #e2e8f0;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 8px 0 16px 0;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.3s, background-color 0.3s;
+    }
+    .progress-bar.warning { background: var(--warning); }
+    .progress-bar.danger { background: var(--danger); }
+
+    .alert-banner {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-left: 4px solid var(--danger);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+      color: #991b1b;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .savings-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .savings-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #166534;
+      margin-bottom: 6px;
+    }
+    .savings-item {
+      font-size: 13px;
+      color: #15803d;
+      margin-bottom: 4px;
+    }
+
+    .ratio-list {
+      margin-top: 14px;
+    }
+    .ratio-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .ratio-name { width: 90px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+    .ratio-bar-bg { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .ratio-bar-fill { height: 100%; background: #3b82f6; }
+    .ratio-pct { width: 45px; text-align: right; font-weight: 600; color: #475569; }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 24px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>🏢 월세·고정비 계산기</h1>
+    <p class="subtitle">1인 가구 자취생 & 소상공인 가게를 위한 실시간 숨은 돈 찾기</p>
+  </header>
+
+  <div class="mode-toggle">
+    <button type="button" class="mode-btn active" id="btn-mode-single" onclick="setMode('single')">👤 1인 가구 (자취생)</button>
+    <button type="button" class="mode-btn" id="btn-mode-biz" onclick="setMode('biz')">🏪 소상공인 (가게·매장)</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">1. 월 예산 설정</div>
+    <div class="input-group">
+      <label class="input-label" id="budget-label">월 실수령액 (월급)</label>
+      <div class="input-row">
+        <input type="text" class="input-text" id="budget-input" placeholder="예: 2,500,000" oninput="handleMoneyInput(this); calculate();">
+        <span class="unit">원</span>
+      </div>
+      <div class="korean-unit" id="budget-korean"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" style="justify-content: space-between;">
+      <span>2. 고정비 항목 입력</span>
+      <div>
+        <button type="button" class="btn-action" onclick="addItem()">＋ 항목 추가</button>
+        <button type="button" class="btn-action" onclick="resetAll()">전체 초기화</button>
+      </div>
+    </div>
+    <div id="items-container">
+      <!-- 동적 생성 -->
+    </div>
+  </div>
+
+  <div class="result-box">
+    <div class="section-title">📊 분석 결과</div>
+
+    <div class="alert-banner" id="housing-alert">
+      ⚠️ <b>주거비 과다 경고!</b> 월세+관리비가 월 예산의 30%를 초과했습니다. (<span id="housing-ratio">0</span>%)
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">월 총 고정비</div>
+        <div class="stat-val primary" id="res-monthly-total">0원</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">연간 총 고정비</div>
+        <div class="stat-val" id="res-yearly-total">0원</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">예산 대비 잔여액</div>
+        <div class="stat-val" id="res-remaining">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">고정비 소진율</div>
+        <div class="stat-val" id="res-usage-pct">0%</div>
+      </div>
+    </div>
+
+    <div style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px;">예산 소진 현황</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="budget-progress"></div>
+    </div>
+
+    <div class="section-title" style="margin-top: 18px;">지출 비중 상위 항목</div>
+    <div class="ratio-list" id="ratio-container">
+      <p style="font-size: 13px; color: var(--text-muted);">금액을 입력하시면 비중 차트가 표시됩니다.</p>
+    </div>
+
+    <div class="savings-box" id="savings-box" style="display: none;">
+      <div class="savings-title">💡 10% 절감 시뮬레이션 (상위 지출 항목)</div>
+      <div id="savings-items"></div>
+    </div>
+
+    <button type="button" class="btn-action" style="width: 100%; justify-content: center; margin-top: 16px; background: #2563eb; color: #fff; border: none; padding: 12px;" onclick="copySummary()">📋 결과 요약 복사하기</button>
+  </div>
+
+  <footer>
+    🔒 모든 계산은 사용자 브라우저 내부에서만 수행되며, 서버로 일절 전송되거나 저장되지 않습니다.<br>
+    클로드 AI(Claude Pro) 연계 제작 · 1인 가구 & 소상공인 금융 프라이버시 계산기
+  </footer>
+</div>
+
+<script>
+let currentMode = 'single';
+
+const defaultSingleItems = [
+  { name: '월세', placeholder: '500,000', period: 'monthly', isHousing: true },
+  { name: '관리비', placeholder: '100,000', period: 'monthly', isHousing: true },
+  { name: '공과금 (전기·가스·수도)', placeholder: '80,000', period: 'monthly', isHousing: false },
+  { name: '통신비 (휴대폰·인터넷)', placeholder: '55,000', period: 'monthly', isHousing: false },
+  { name: '보험료', placeholder: '100,000', period: 'monthly', isHousing: false },
+  { name: '구독료 (OTT·음악)', placeholder: '30,000', period: 'monthly', isHousing: false },
+  { name: '교통비', placeholder: '70,000', period: 'monthly', isHousing: false }
+];
+
+const defaultBizItems = [
+  { name: '매장 임대료', placeholder: '1,500,000', period: 'monthly', isHousing: true },
+  { name: '상가 공용 관리비', placeholder: '250,000', period: 'monthly', isHousing: true },
+  { name: '매장 전기·수도 공과금', placeholder: '300,000', period: 'monthly', isHousing: false },
+  { name: '보안·인터넷·CCTV', placeholder: '80,000', period: 'monthly', isHousing: false },
+  { name: '화재·배상책임보험', placeholder: '70,000', period: 'monthly', isHousing: false },
+  { name: 'POS·배달앱 구독 솔루션', placeholder: '150,000', period: 'monthly', isHousing: false },
+  { name: '정수기·기기 렌탈료', placeholder: '50,000', period: 'monthly', isHousing: false }
+];
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btn-mode-single').classList.toggle('active', mode === 'single');
+  document.getElementById('btn-mode-biz').classList.toggle('active', mode === 'biz');
+  document.getElementById('budget-label').innerText = mode === 'single' ? '월 실수령액 (월급)' : '월 예상 매출 (목표액)';
+  renderItems();
+  calculate();
+}
+
+function renderItems() {
+  const container = document.getElementById('items-container');
+  const defaults = currentMode === 'single' ? defaultSingleItems : defaultBizItems;
+  container.innerHTML = '';
+
+  defaults.forEach((item, idx) => {
+    container.appendChild(createItemRow(item.name, item.placeholder, item.period, item.isHousing, false));
+  });
+}
+
+function createItemRow(name, placeholder, period, isHousing, isCustom) {
+  const div = document.createElement('div');
+  div.className = 'input-group expense-row';
+  div.dataset.housing = isHousing ? 'true' : 'false';
+
+  div.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span class="input-label item-name">${name}</span>
+      ${isCustom ? `<button type="button" class="btn-del" onclick="this.closest('.expense-row').remove(); calculate();">삭제</button>` : ''}
+    </div>
+    <div class="input-row">
+      <input type="text" class="input-text item-val" placeholder="예: ${placeholder}" oninput="handleMoneyInput(this); calculate();">
+      <span class="unit">원</span>
+      <select class="select-period" onchange="calculate();">
+        <option value="monthly" ${period === 'monthly' ? 'selected' : ''}>매월</option>
+        <option value="yearly" ${period === 'yearly' ? 'selected' : ''}>매년</option>
+      </select>
+    </div>
+    <div class="korean-unit item-korean"></div>
+  `;
+  return div;
+}
+
+function addItem() {
+  const container = document.getElementById('items-container');
+  if (container.querySelectorAll('.expense-row').length >= 30) {
+    alert('최대 30개까지 추가 가능합니다.');
+    return;
+  }
+  const customName = prompt('추가할 고정비 항목 이름을 입력하세요:', '기타 고정비');
+  if (customName && customName.trim()) {
+    container.appendChild(createItemRow(customName.trim(), '50,000', 'monthly', false, true));
+    calculate();
+  }
+}
+
+function resetAll() {
+  if (confirm('모든 입력값을 초기화하시겠습니까?')) {
+    document.getElementById('budget-input').value = '';
+    document.getElementById('budget-korean').innerText = '';
+    renderItems();
+    calculate();
+  }
+}
+
+function formatKorean(num) {
+  if (!num || isNaN(num) || num <= 0) return '';
+  const man = Math.floor((num % 100000000) / 10000);
+  const eok = Math.floor(num / 100000000);
+  const rest = num % 10000;
+  let res = '';
+  if (eok > 0) res += eok + '억 ';
+  if (man > 0) res += man + '만 ';
+  if (rest > 0 && eok === 0 && man === 0) res += rest;
+  return res.trim() + '원';
+}
+
+function handleMoneyInput(el) {
+  const clean = el.value.replace(/[^0-9]/g, '');
+  if (!clean) {
+    el.value = '';
+    el.closest('.input-group').querySelector('.korean-unit').innerText = '';
+    return;
+  }
+  const val = parseInt(clean, 10);
+  el.value = val.toLocaleString();
+  const korEl = el.closest('.input-group').querySelector('.korean-unit');
+  if (korEl) korEl.innerText = formatKorean(val);
+}
+
+function calculate() {
+  const budgetRaw = document.getElementById('budget-input').value.replace(/,/g, '');
+  const budget = parseInt(budgetRaw, 10) || 0;
+
+  let monthlyTotal = 0;
+  let housingTotal = 0;
+  const items = [];
+
+  document.querySelectorAll('.expense-row').forEach(row => {
+    const name = row.querySelector('.item-name').innerText;
+    const valRaw = row.querySelector('.item-val').value.replace(/,/g, '');
+    const rawNum = parseInt(valRaw, 10) || 0;
+    const period = row.querySelector('.select-period').value;
+    const isHousing = row.dataset.housing === 'true';
+
+    const monthlyVal = period === 'yearly' ? Math.round(rawNum / 12) : rawNum;
+    monthlyTotal += monthlyVal;
+    if (isHousing) housingTotal += monthlyVal;
+
+    if (monthlyVal > 0) {
+      items.push({ name, monthly: monthlyVal, yearly: monthlyVal * 12 });
+    }
+  });
+
+  const yearlyTotal = monthlyTotal * 12;
+  const remaining = budget - monthlyTotal;
+
+  document.getElementById('res-monthly-total').innerText = monthlyTotal.toLocaleString() + '원';
+  document.getElementById('res-yearly-total').innerText = yearlyTotal.toLocaleString() + '원';
+
+  const remEl = document.getElementById('res-remaining');
+  if (budget > 0) {
+    remEl.innerText = remaining.toLocaleString() + '원';
+    remEl.className = 'stat-val ' + (remaining >= 0 ? 'success' : 'danger');
+  } else {
+    remEl.innerText = '—';
+    remEl.className = 'stat-val';
+  }
+
+  const usagePct = budget > 0 ? Math.min(Math.round((monthlyTotal / budget) * 100), 999) : 0;
+  document.getElementById('res-usage-pct').innerText = budget > 0 ? usagePct + '%' : '0%';
+
+  const prog = document.getElementById('budget-progress');
+  prog.style.width = Math.min(usagePct, 100) + '%';
+  prog.className = 'progress-bar' + (usagePct > 100 ? ' danger' : usagePct > 70 ? ' warning' : '');
+
+  // 주거비 30% 경고
+  const housingRatio = budget > 0 ? (housingTotal / budget) * 100 : 0;
+  const alertEl = document.getElementById('housing-alert');
+  if (budget > 0 && housingRatio > 30) {
+    alertEl.style.display = 'block';
+    document.getElementById('housing-ratio').innerText = housingRatio.toFixed(1);
+  } else {
+    alertEl.style.display = 'none';
+  }
+
+  // 비율 막대
+  items.sort((a, b) => b.monthly - a.monthly);
+  const ratioBox = document.getElementById('ratio-container');
+  if (items.length === 0) {
+    ratioBox.innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">금액을 입력하시면 비중 차트가 표시됩니다.</p>';
+  } else {
+    ratioBox.innerHTML = '';
+    items.forEach(it => {
+      const pct = monthlyTotal > 0 ? ((it.monthly / monthlyTotal) * 100).toFixed(1) : 0;
+      const row = document.createElement('div');
+      row.className = 'ratio-item';
+      row.innerHTML = `
+        <span class="ratio-name" title="${it.name}">${it.name}</span>
+        <div class="ratio-bar-bg"><div class="ratio-bar-fill" style="width: ${pct}%;"></div></div>
+        <span class="ratio-pct">${pct}%</span>
+      `;
+      ratioBox.appendChild(row);
+    });
+  }
+
+  // 절감 시뮬레이션
+  const savingsBox = document.getElementById('savings-box');
+  const savingsItems = document.getElementById('savings-items');
+  if (items.length > 0) {
+    savingsBox.style.display = 'block';
+    savingsItems.innerHTML = '';
+    const top3 = items.slice(0, 3);
+    top3.forEach(it => {
+      const saveYear = Math.round(it.yearly * 0.1);
+      const p = document.createElement('div');
+      p.className = 'savings-item';
+      p.innerHTML = `• <b>${it.name}</b> 10% 절감 시: 연간 <b>${saveYear.toLocaleString()}원</b> 절약!`;
+      savingsItems.appendChild(p);
+    });
+  } else {
+    savingsBox.style.display = 'none';
+  }
+}
+
+function copySummary() {
+  const m = document.getElementById('res-monthly-total').innerText;
+  const y = document.getElementById('res-yearly-total').innerText;
+  const r = document.getElementById('res-remaining').innerText;
+  const u = document.getElementById('res-usage-pct').innerText;
+
+  const text = `[월세·고정비 계산기 요약]\n- 모드: ${currentMode === 'single' ? '1인 가구' : '소상공인 매장'}\n- 월 총 고정비: ${m}\n- 연간 총 고정비: ${y}\n- 예산 대비 잔여액: ${r}\n- 고정비 소진율: ${u}\n\n(개인정보 저장 없는 클라우드 AI 계산기)`;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('결과 요약이 클립보드에 복사되었습니다!');
+  }).catch(() => {
+    alert('복사 권한이 없습니다. 텍스트를 직접 드래그해 복사하세요.');
+  });
+}
+
+// 초기 렌더링
+renderItems();
+</script>
+
+</body>
+</html>
+EOF
